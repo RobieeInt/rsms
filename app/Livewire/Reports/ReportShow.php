@@ -3,6 +3,7 @@
 namespace App\Livewire\Reports;
 
 use App\Models\VisitReport;
+use App\Notifications\VisitReportSentNotification;
 use Livewire\Component;
 
 class ReportShow extends Component
@@ -12,6 +13,19 @@ class ReportShow extends Component
     public function mount(VisitReport $report): void
     {
         $this->report = $report;
+    }
+
+    public function sendEmail(): void
+    {
+        $this->report->load(['client', 'technician', 'schedule']);
+
+        if (!$this->report->client->pic_email) {
+            $this->dispatch('notify', message: 'Klien tidak memiliki alamat email.', type: 'error');
+            return;
+        }
+
+        $this->report->client->notifyNow(new VisitReportSentNotification($this->report));
+        $this->dispatch('notify', message: 'Laporan berhasil dikirim ke ' . $this->report->client->pic_email . '.', type: 'success');
     }
 
     public function render()

@@ -76,7 +76,7 @@
         </div>
 
         <p class="text-center text-xs text-slate-400 mt-6">
-            &copy; {{ date('Y') }} PT Reconext IT Solutions. All rights reserved.
+            &copy; {{ date('Y') }} Reconext Digital Kreasi. All rights reserved.
         </p>
     </div>
 </body>

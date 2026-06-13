@@ -48,7 +48,7 @@ class InvoiceReminderNotification extends Notification implements ShouldQueue
             ->line('**Amount:** Rp ' . number_format($this->invoice->total_amount, 0, ',', '.'))
             ->line('**Due Date:** ' . $this->invoice->due_date->format('d F Y'))
             ->line('Please arrange payment at your earliest convenience.')
-            ->salutation('Best regards, PT Reconext IT Solutions');
+            ->salutation('Best regards, Reconext Digital Kreasi');
     }
 
     public function toArray(object $notifiable): array

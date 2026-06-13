@@ -22,15 +22,16 @@ class InvoiceGeneratedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Invoice ' . $this->invoice->invoice_number . ' - Reconext IT Solutions')
+            ->subject('Invoice ' . $this->invoice->invoice_number . ' - Reconext Digital Kreasi')
             ->greeting('Dear ' . $notifiable->pic_name . ',')
             ->line('Please find your invoice details below.')
             ->line('**Invoice Number:** ' . $this->invoice->invoice_number)
+            ->line('**Description:** Invoice for ' . $this->invoice->quotation->title)
             ->line('**Amount:** Rp ' . number_format($this->invoice->total_amount, 0, ',', '.'))
             ->line('**Due Date:** ' . $this->invoice->due_date->format('d F Y'))
             ->action('View Invoice', url('/'))
             ->line('Thank you for your business.')
-            ->salutation('Best regards, PT Reconext IT Solutions');
+            ->salutation('Best regards, Reconext Digital Kreasi');
     }
 
     public function toArray(object $notifiable): array

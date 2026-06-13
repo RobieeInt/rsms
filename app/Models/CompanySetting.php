@@ -14,7 +14,7 @@ class CompanySetting extends Model
     public static function getSettings(): self
     {
         return static::firstOrCreate([], [
-            'company_name' => 'Reconext IT Solutions',
+            'company_name' => 'Reconext Digital Kreasi',
         ]);
     }
 

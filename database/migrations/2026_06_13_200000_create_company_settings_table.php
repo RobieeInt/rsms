@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('company_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name')->default('Reconext IT Solutions');
+            $table->string('company_name')->default('Reconext Digital Kreasi');
             $table->string('logo')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();

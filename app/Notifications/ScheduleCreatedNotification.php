@@ -30,7 +30,7 @@ class ScheduleCreatedNotification extends Notification implements ShouldQueue
             ->line('**Technician:** ' . $this->schedule->technician->name)
             ->when($this->schedule->notes, fn($mail) => $mail->line('**Notes:** ' . $this->schedule->notes))
             ->line('Please ensure access is available at the scheduled time.')
-            ->salutation('Best regards, PT Reconext IT Solutions');
+            ->salutation('Best regards, Reconext Digital Kreasi');
     }
 
     public function toArray(object $notifiable): array

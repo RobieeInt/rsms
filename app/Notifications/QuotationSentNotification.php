@@ -22,7 +22,7 @@ class QuotationSentNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Quotation ' . $this->quotation->quotation_number . ' - Reconext IT Solutions')
+            ->subject('Quotation ' . $this->quotation->quotation_number . ' - Reconext Digital Kreasi')
             ->greeting('Dear ' . $notifiable->pic_name . ',')
             ->line('Please find our quotation for your review.')
             ->line('**Quotation Number:** ' . $this->quotation->quotation_number)
@@ -30,7 +30,7 @@ class QuotationSentNotification extends Notification implements ShouldQueue
             ->line('**Valid Until:** ' . $this->quotation->expiry_date->format('d F Y'))
             ->action('Review & Approve Quotation', $this->quotation->getApprovalUrl())
             ->line('Please click the button above to review and approve or reject the quotation.')
-            ->salutation('Best regards, PT Reconext IT Solutions');
+            ->salutation('Best regards, Reconext Digital Kreasi');
     }
 
     public function toArray(object $notifiable): array

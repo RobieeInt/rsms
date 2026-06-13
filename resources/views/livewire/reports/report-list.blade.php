@@ -53,6 +53,15 @@
                                 <a href="{{ route('reports.show', $report) }}" class="btn-secondary py-1 px-2.5 text-xs">Lihat</a>
                                 <a href="{{ route('reports.edit', $report) }}" class="btn-secondary py-1 px-2.5 text-xs">Edit</a>
                                 <a href="{{ route('pdf.report', $report) }}" target="_blank" class="btn-secondary py-1 px-2.5 text-xs">PDF</a>
+                                @if($report->status !== 'draft')
+                                <button wire:click="sendEmail({{ $report->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="sendEmail({{ $report->id }})"
+                                        class="btn-secondary py-1 px-2.5 text-xs">
+                                    <span wire:loading.remove wire:target="sendEmail({{ $report->id }})">Kirim</span>
+                                    <span wire:loading wire:target="sendEmail({{ $report->id }})">...</span>
+                                </button>
+                                @endif
                             </div>
                         </td>
                     </tr>

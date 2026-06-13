@@ -56,13 +56,13 @@ class DatabaseSeeder extends Seeder
         $tech->assignRole('technician');
 
         CompanySetting::create([
-            'company_name' => 'PT Reconext IT Solutions',
+            'company_name' => 'Reconext Digital Kreasi',
             'email' => 'info@reconext.com',
             'phone' => '+62 21 5555 1234',
             'address' => 'Jl. Sudirman No. 123, Jakarta Pusat, DKI Jakarta 10220',
             'bank_name' => 'Bank BCA',
             'bank_account_number' => '1234567890',
-            'bank_account_holder' => 'PT Reconext IT Solutions',
+            'bank_account_holder' => 'Reconext Digital Kreasi',
             'website' => 'https://reconext.com',
             'tax_number' => '01.234.567.8-901.000',
         ]);
