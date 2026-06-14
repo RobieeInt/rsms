@@ -74,7 +74,7 @@ class InvoiceReminderNotification extends Notification
         $pdfOutput = app(PdfService::class)->generateInvoice($this->invoice)->output();
 
         return $mail
-            ->salutation('Terima kasih, Reconext Digital Kreasi')
+            ->salutation('Hormat kami, Reconext Digital Kreasi')
             ->attachData($pdfOutput, $filename, ['mime' => 'application/pdf']);
     }
 }

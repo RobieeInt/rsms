@@ -28,4 +28,10 @@ class PdfController extends Controller
         $pdf = $this->pdfService->generateInvoice($invoice);
         return $pdf->download('invoice-' . $invoice->invoice_number . '.pdf');
     }
+
+    public function invoicePublic(Invoice $invoice)
+    {
+        $pdf = $this->pdfService->generateInvoice($invoice);
+        return $pdf->download($invoice->invoice_number . '.pdf');
+    }
 }

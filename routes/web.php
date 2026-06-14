@@ -19,6 +19,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::get('/quotation/approve/{token}', [QuotationApprovalController::class, 'show'])->name('quotation.approve');
 Route::post('/quotation/approve/{token}', [QuotationApprovalController::class, 'process'])->name('quotation.approve.post');
 
+// Public invoice PDF via signed URL (for WhatsApp / email links sent to clients)
+Route::get('/invoice/download/{invoice}', [PdfController::class, 'invoicePublic'])->name('invoice.pdf.public')->middleware('signed');
+
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

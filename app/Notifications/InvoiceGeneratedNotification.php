@@ -42,7 +42,7 @@ class InvoiceGeneratedNotification extends Notification
             ->line('**Jatuh Tempo:** ' . $due)
             ->line('Invoice terlampir dalam email ini sebagai file PDF.')
             ->line('Mohon melakukan pembayaran sebelum tanggal jatuh tempo.')
-            ->salutation('Terima kasih,<br>Reconext Digital Kreasi')
+            ->salutation('Terima kasih, Reconext Digital Kreasi')
             ->attachData($pdfOutput, $filename, ['mime' => 'application/pdf']);
     }
 }
