@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('invoices:generate-monthly')->dailyAt('00:05');
 Schedule::command('invoices:send-reminders')->dailyAt('08:00');
+Schedule::command('schedules:send-reminders')->dailyAt('07:00');

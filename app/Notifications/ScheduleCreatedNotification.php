@@ -3,43 +3,42 @@
 namespace App\Notifications;
 
 use App\Models\Schedule;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ScheduleCreatedNotification extends Notification implements ShouldQueue
+class ScheduleCreatedNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(public Schedule $schedule) {}
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('Reconext IT Support Visit Schedule')
-            ->greeting('Dear ' . $notifiable->pic_name . ',')
-            ->line('We have scheduled a maintenance visit for your company.')
-            ->line('**Visit Date:** ' . $this->schedule->visit_date->format('d F Y'))
-            ->line('**Time:** ' . $this->schedule->start_time)
-            ->line('**Technician:** ' . $this->schedule->technician->name)
-            ->when($this->schedule->notes, fn($mail) => $mail->line('**Notes:** ' . $this->schedule->notes))
-            ->line('Please ensure access is available at the scheduled time.')
-            ->salutation('Best regards, Reconext Digital Kreasi');
-    }
+        Carbon::setLocale('id');
 
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'type' => 'schedule_created',
-            'title' => 'Visit Scheduled',
-            'message' => 'A maintenance visit has been scheduled for ' . $this->schedule->visit_date->format('d F Y'),
-            'schedule_id' => $this->schedule->id,
-        ];
+        $schedule = $this->schedule;
+        $date     = $schedule->visit_date->locale('id')->translatedFormat('l, d F Y');
+        $time     = $schedule->start_time
+            . ($schedule->end_time ? ' — ' . $schedule->end_time : '');
+
+        $mail = (new MailMessage)
+            ->subject('Jadwal Kunjungan IT Maintenance — ' . $schedule->visit_date->locale('id')->translatedFormat('d F Y'))
+            ->greeting('Yth. ' . ($notifiable->pic_name ?? 'Bapak/Ibu') . ',')
+            ->line('Kami ingin menginformasikan jadwal kunjungan IT maintenance dari **Reconext Digital Kreasi**.')
+            ->line('**Tanggal:** ' . $date)
+            ->line('**Waktu:** ' . $time)
+            ->line('**Teknisi:** ' . $schedule->technician->name);
+
+        if ($schedule->notes) {
+            $mail->line('**Catatan:** ' . $schedule->notes);
+        }
+
+        return $mail
+            ->line('Mohon pastikan akses tersedia pada waktu yang telah ditentukan.')
+            ->salutation('Terima kasih, Reconext Digital Kreasi');
     }
 }
