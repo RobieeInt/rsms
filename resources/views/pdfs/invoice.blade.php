@@ -310,14 +310,15 @@ html, body {
                     </div>
                     @endif
                 </td>
-                <td style="width:50%;">
+                <td style="width:50%; vertical-align:bottom; text-align:right;">
                     @if($invoice->status === 'paid' && $invoice->payment_date)
-                    <div style="font-size:10px; color:#555; text-align:right; margin-bottom:6px;">
+                    <div style="font-size:10px; color:#555; margin-bottom:10px;">
                         Dibayar {{ $invoice->payment_date->locale('id')->translatedFormat('d F Y') }}
                         @if($invoice->payment_method) &bull; {{ $invoice->payment_method }}@endif
                     </div>
                     @endif
-                    <div class="sig">{{ $company->bank_account_holder ?? $company->company_name }}</div>
+                    <div style="font-size:9px; color:#888; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:32px;">Hormat Kami,</div>
+                    <div class="sig">{{ $company->company_name }}</div>
                 </td>
             </tr>
         </table>
