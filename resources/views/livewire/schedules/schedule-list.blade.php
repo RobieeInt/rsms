@@ -80,7 +80,7 @@
                             <a href="{{ route('reports.show', $schedule->visitReport) }}" class="text-xs text-violet-600 dark:text-violet-400 hover:underline">
                                 {{ $schedule->visitReport->report_number }}
                             </a>
-                            @elseif($schedule->status === 'in_progress')
+                            @elseif($schedule->status !== 'cancelled')
                             <a href="{{ route('reports.create', $schedule) }}" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">Buat Report</a>
                             @else
                             <span class="text-slate-400 text-xs">-</span>
