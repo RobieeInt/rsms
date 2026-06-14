@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Invoice;
+use App\Services\PdfService;
 use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -67,8 +68,13 @@ class InvoiceReminderNotification extends Notification
             $mail->line($urgency);
         }
 
+        $mail->line('Invoice terlampir sebagai file PDF.');
+
+        $filename  = $this->invoice->invoice_number . '.pdf';
+        $pdfOutput = app(PdfService::class)->generateInvoice($this->invoice)->output();
+
         return $mail
-            ->action('Lihat Invoice', route('invoices.show', $this->invoice))
-            ->salutation('Terima kasih,<br>Reconext Digital Kreasi');
+            ->salutation('Terima kasih, Reconext Digital Kreasi')
+            ->attachData($pdfOutput, $filename, ['mime' => 'application/pdf']);
     }
 }
