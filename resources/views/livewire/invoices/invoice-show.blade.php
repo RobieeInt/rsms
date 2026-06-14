@@ -101,6 +101,42 @@
                 <a href="{{ asset('storage/' . $invoice->payment_proof) }}" target="_blank" class="text-sm text-violet-600 dark:text-violet-400 hover:underline">View proof</a>
             </div>
             @endif
+
+            {{-- Send Log --}}
+            <div class="card p-5">
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Riwayat Pengiriman
+                </h3>
+                @if($invoice->sendLogs->isEmpty())
+                <p class="text-sm text-slate-400 dark:text-slate-500 italic">Belum ada email yang dikirim.</p>
+                @else
+                <ul class="space-y-2">
+                    @foreach($invoice->sendLogs as $log)
+                    @php
+                        $typeColor = match(true) {
+                            str_contains($log->type, 'overdue') => 'text-red-500',
+                            $log->type === 'due_today'          => 'text-orange-500',
+                            $log->type === 'sent'               => 'text-violet-500',
+                            default                             => 'text-blue-500',
+                        };
+                    @endphp
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-current {{ $typeColor }} shrink-0 mt-1.5"></span>
+                        <div class="min-w-0">
+                            <span class="font-medium text-slate-700 dark:text-slate-300 {{ $typeColor }}">{{ (new \App\Models\InvoiceSendLog(['type' => $log->type]))->typeLabel() }}</span>
+                            @if($log->sent_to)
+                            <span class="text-slate-400"> → {{ $log->sent_to }}</span>
+                            @endif
+                            <div class="text-slate-400 dark:text-slate-500 mt-0.5">
+                                {{ $log->sent_at->locale('id')->translatedFormat('d M Y, H:i') }}
+                            </div>
+                        </div>
+                    </li>
+                    @endforeach
+                </ul>
+                @endif
+            </div>
         </div>
     </div>
 

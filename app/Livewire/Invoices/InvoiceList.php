@@ -55,12 +55,14 @@ class InvoiceList extends Component
     public function resendEmail(int $id): void
     {
         $invoice = Invoice::with('client')->findOrFail($id);
-        if (!$invoice->client->pic_email) {
-            $this->dispatch('notify', message: 'Client has no email address set.', type: 'error');
+        $email = $invoice->client->pic_email ?? null;
+        if (!$email) {
+            $this->dispatch('notify', message: 'Klien tidak memiliki alamat email.', type: 'error');
             return;
         }
         $invoice->client->notifyNow(new InvoiceGeneratedNotification($invoice));
-        $this->dispatch('notify', message: 'Email resent for ' . $invoice->invoice_number . '.', type: 'success');
+        $invoice->logSend('sent', $email);
+        $this->dispatch('notify', message: 'Email invoice dikirim ke ' . $email . '.', type: 'success');
     }
 
     public function confirmDelete(int $id): void { $this->deleteId = $id; }
@@ -74,7 +76,7 @@ class InvoiceList extends Component
 
     public function render()
     {
-        $invoices = Invoice::with('client')
+        $invoices = Invoice::with(['client', 'sendLogs' => fn($q) => $q->latest('sent_at')->limit(1)])
             ->when($this->search, fn($q) => $q->where('invoice_number', 'like', "%{$this->search}%")
                 ->orWhereHas('client', fn($q) => $q->where('company_name', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))

@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // template_id column already exists from partial prior run — only add results + FK
         Schema::table('asset_checklists', function (Blueprint $table) {
+            if (!Schema::hasColumn('asset_checklists', 'template_id')) {
+                $table->foreignId('template_id')->nullable()->after('asset_id')
+                    ->constrained('checklist_templates')->nullOnDelete();
+            } else {
+                $table->foreign('template_id')->references('id')->on('checklist_templates')->nullOnDelete();
+            }
             $table->json('results')->nullable()->after('template_id');
-            $table->foreign('template_id')->references('id')->on('checklist_templates')->nullOnDelete();
         });
     }
 
@@ -22,7 +26,7 @@ return new class extends Migration
     {
         Schema::table('asset_checklists', function (Blueprint $table) {
             $table->dropForeign(['template_id']);
-            $table->dropColumn('results');
+            $table->dropColumn(['template_id', 'results']);
         });
     }
 };

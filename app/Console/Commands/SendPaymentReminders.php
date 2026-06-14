@@ -24,9 +24,9 @@ class SendPaymentReminders extends Command
 
         // Upcoming reminders: 7 days before, 3 days before, due today
         $upcoming = [
-            '7_days_before' => now()->addDays(7)->toDateString(),
-            '3_days_before' => now()->addDays(3)->toDateString(),
-            'due_today'     => now()->toDateString(),
+            'reminder_7days' => now()->addDays(7)->toDateString(),
+            'reminder_3days' => now()->addDays(3)->toDateString(),
+            'due_today'      => now()->toDateString(),
         ];
 
         foreach ($upcoming as $type => $dueDate) {
@@ -35,8 +35,10 @@ class SendPaymentReminders extends Command
                 ->where('due_date', $dueDate)
                 ->whereHas('client', fn($q) => $q->whereNotNull('pic_email'))
                 ->each(function (Invoice $invoice) use ($type) {
+                    $email = $invoice->client->pic_email;
                     $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, $type));
-                    $this->line("  [{$type}] {$invoice->invoice_number} → {$invoice->client->pic_email}");
+                    $invoice->logSend($type, $email);
+                    $this->line("  [{$type}] {$invoice->invoice_number} → {$email}");
                 });
         }
 
@@ -46,8 +48,10 @@ class SendPaymentReminders extends Command
             ->where('due_date', now()->subDays(7)->toDateString())
             ->whereHas('client', fn($q) => $q->whereNotNull('pic_email'))
             ->each(function (Invoice $invoice) {
-                $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, '7_days_overdue'));
-                $this->line("  [7_days_overdue] {$invoice->invoice_number} → {$invoice->client->pic_email}");
+                $email = $invoice->client->pic_email;
+                $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, 'overdue_7days'));
+                $invoice->logSend('overdue_7days', $email);
+                $this->line("  [overdue_7days] {$invoice->invoice_number} → {$email}");
             });
 
         $this->info('Done.');

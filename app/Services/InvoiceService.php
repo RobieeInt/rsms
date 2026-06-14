@@ -78,7 +78,11 @@ class InvoiceService
     {
         $invoice->update(['status' => 'sent']);
 
-        $invoice->client->notify(new InvoiceGeneratedNotification($invoice));
+        $email = $invoice->client->pic_email ?? null;
+        if ($email) {
+            $invoice->client->notifyNow(new InvoiceGeneratedNotification($invoice));
+        }
+        $invoice->logSend('sent', $email);
     }
 
     public function markAsPaid(Invoice $invoice, array $data): void

@@ -3,44 +3,41 @@
 namespace App\Notifications;
 
 use App\Models\Invoice;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class InvoiceGeneratedNotification extends Notification implements ShouldQueue
+class InvoiceGeneratedNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(public Invoice $invoice) {}
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('Invoice ' . $this->invoice->invoice_number . ' - Reconext Digital Kreasi')
-            ->greeting('Dear ' . $notifiable->pic_name . ',')
-            ->line('Please find your invoice details below.')
-            ->line('**Invoice Number:** ' . $this->invoice->invoice_number)
-            ->line('**Description:** Invoice for ' . $this->invoice->quotation->title)
-            ->line('**Amount:** Rp ' . number_format($this->invoice->total_amount, 0, ',', '.'))
-            ->line('**Due Date:** ' . $this->invoice->due_date->format('d F Y'))
-            ->action('View Invoice', url('/'))
-            ->line('Thank you for your business.')
-            ->salutation('Best regards, Reconext Digital Kreasi');
-    }
+        Carbon::setLocale('id');
 
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'type' => 'invoice_generated',
-            'title' => 'Invoice Generated',
-            'message' => 'Invoice ' . $this->invoice->invoice_number . ' has been generated.',
-            'invoice_id' => $this->invoice->id,
-        ];
+        $invoice = $this->invoice;
+        $amount  = 'Rp ' . number_format($invoice->total_amount, 0, ',', '.');
+        $due     = $invoice->due_date->locale('id')->translatedFormat('d F Y');
+
+        $desc = $invoice->type === 'retainer'
+            ? 'Layanan IT Support Bulanan — ' . now()->locale('id')->translatedFormat('F Y')
+            : ($invoice->quotation?->title ?? 'Layanan IT');
+
+        return (new MailMessage)
+            ->subject('Invoice ' . $invoice->invoice_number . ' — Reconext Digital Kreasi')
+            ->greeting('Yth. ' . ($notifiable->pic_name ?? 'Bapak/Ibu') . ',')
+            ->line('Berikut kami sampaikan invoice dari **Reconext Digital Kreasi**.')
+            ->line('**No. Invoice:** ' . $invoice->invoice_number)
+            ->line('**Keterangan:** ' . $desc)
+            ->line('**Jumlah:** ' . $amount)
+            ->line('**Jatuh Tempo:** ' . $due)
+            ->line('Mohon melakukan pembayaran sebelum tanggal jatuh tempo.')
+            ->action('Lihat Invoice', route('invoices.show', $invoice))
+            ->salutation('Terima kasih,<br>Reconext Digital Kreasi');
     }
 }

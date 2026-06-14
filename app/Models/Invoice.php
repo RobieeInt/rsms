@@ -49,6 +49,16 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class)->orderBy('sort_order');
     }
 
+    public function sendLogs()
+    {
+        return $this->hasMany(InvoiceSendLog::class)->orderByDesc('sent_at');
+    }
+
+    public function logSend(string $type, ?string $sentTo = null, string $channel = 'email'): void
+    {
+        $this->sendLogs()->create(['type' => $type, 'sent_to' => $sentTo, 'channel' => $channel]);
+    }
+
     public static function generateNumber(): string
     {
         $year = now()->format('Y');

@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('report_number')->unique();
             $table->text('summary')->nullable();
             $table->text('overall_notes')->nullable();
-            $table->string('technician_signature')->nullable();
-            $table->string('client_signature')->nullable();
+            $table->longText('technician_signature')->nullable();
+            $table->longText('client_signature')->nullable();
             $table->string('client_signed_by')->nullable();
             $table->timestamp('signed_at')->nullable();
             $table->enum('status', ['draft', 'completed', 'signed'])->default('draft');

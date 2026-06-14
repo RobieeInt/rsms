@@ -67,7 +67,15 @@
                         <td data-label="Tanggal" class="text-sm">{{ $invoice->invoice_date->format('d M Y') }}</td>
                         <td data-label="Jatuh Tempo" class="text-sm {{ $invoice->isOverdue() ? 'text-red-500 font-semibold' : '' }}">{{ $invoice->due_date->format('d M Y') }}</td>
                         <td data-label="Jumlah" class="font-semibold">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
-                        <td data-label="Status"><span class="{{ $sc[$invoice->status] ?? 'badge-gray' }}">{{ ucfirst($invoice->status) }}</span></td>
+                        <td data-label="Status">
+                            <span class="{{ $sc[$invoice->status] ?? 'badge-gray' }}">{{ ucfirst($invoice->status) }}</span>
+                            @if($invoice->sendLogs->isNotEmpty())
+                            <div class="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
+                                <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                {{ $invoice->sendLogs->first()->sent_at->locale('id')->diffForHumans() }}
+                            </div>
+                            @endif
+                        </td>
                         <td data-label="">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <a href="{{ route('invoices.show', $invoice) }}" class="btn-secondary py-1 px-2.5 text-xs">Lihat</a>

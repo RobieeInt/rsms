@@ -34,8 +34,14 @@ class InvoiceShow extends Component
 
     public function resendEmail(): void
     {
+        $email = $this->invoice->client->pic_email ?? null;
+        if (!$email) {
+            $this->dispatch('notify', message: 'Klien tidak memiliki alamat email.', type: 'error');
+            return;
+        }
         $this->invoice->client->notifyNow(new InvoiceGeneratedNotification($this->invoice));
-        $this->dispatch('notify', message: 'Invoice email resent to ' . ($this->invoice->client->pic_email ?? 'client') . '.', type: 'success');
+        $this->invoice->logSend('sent', $email);
+        $this->dispatch('notify', message: 'Email invoice dikirim ke ' . $email . '.', type: 'success');
     }
 
     public function markAsPaid(): void
@@ -64,7 +70,7 @@ class InvoiceShow extends Component
 
     public function render()
     {
-        $this->invoice->load(['client', 'creator', 'items']);
+        $this->invoice->load(['client', 'creator', 'items', 'sendLogs']);
 
         return view('livewire.invoices.invoice-show')
             ->layout('layouts.app', ['title' => $this->invoice->invoice_number]);
