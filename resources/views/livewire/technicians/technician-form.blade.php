@@ -26,8 +26,12 @@
                 @if(!$isEdit)
                 <div>
                     <label class="form-label">Password <span class="text-red-500">*</span></label>
-                    <input wire:model="password" type="password" class="form-input" placeholder="Min. 8 characters">
+                    <input wire:model="password" type="password" class="form-input" placeholder="Min. 8 karakter">
                     @error('password')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="form-label">Konfirmasi Password <span class="text-red-500">*</span></label>
+                    <input wire:model="password_confirmation" type="password" class="form-input" placeholder="Ulangi password">
                 </div>
                 @endif
                 <div>
@@ -45,6 +49,24 @@
                     <label for="is_active" class="text-sm font-medium text-slate-700 dark:text-slate-300">Active</label>
                 </div>
             </div>
+
+            @if($isEdit)
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-5">
+                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Ganti Password</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mb-4">Kosongkan jika tidak ingin mengubah password.</p>
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="form-label">Password Baru</label>
+                        <input wire:model="password" type="password" class="form-input" placeholder="Min. 8 karakter" autocomplete="new-password">
+                        @error('password')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Konfirmasi Password Baru</label>
+                        <input wire:model="password_confirmation" type="password" class="form-input" placeholder="Ulangi password baru" autocomplete="new-password">
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <div class="flex gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <button type="submit" class="btn-primary" wire:loading.attr="disabled">

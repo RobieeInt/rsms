@@ -12,6 +12,7 @@ class TechnicianForm extends Component
     public string $name = '';
     public string $email = '';
     public string $password = '';
+    public string $password_confirmation = '';
     public string $phone = '';
     public string $position = '';
     public bool $is_active = true;
@@ -41,7 +42,9 @@ class TechnicianForm extends Component
         ];
 
         if (!$isEdit) {
-            $rules['password'] = 'required|string|min:8';
+            $rules['password'] = 'required|string|min:8|confirmed';
+        } elseif ($this->password) {
+            $rules['password'] = 'string|min:8|confirmed';
         }
 
         $this->validate($rules);

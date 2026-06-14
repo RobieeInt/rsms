@@ -26,6 +26,7 @@ class Client extends Model
         'is_active' => 'boolean',
         'monthly_retainer_fee' => 'decimal:2',
         'health_score' => 'decimal:2',
+        'invoice_due_date' => 'integer',
     ];
 
     public function assets()
