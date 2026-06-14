@@ -11,7 +11,7 @@
         <div class="card p-6 space-y-5">
             <div>
                 <label class="form-label">Client <span class="text-red-500">*</span></label>
-                <select wire:model="client_id" class="form-select">
+                <select x-select wire:model="client_id" class="form-select">
                     <option value="">Select client...</option>
                     @foreach($clients as $client)
                     <option value="{{ $client->id }}">{{ $client->company_name }}</option>
@@ -23,7 +23,7 @@
             @if(auth()->user()->hasRole('admin'))
             <div>
                 <label class="form-label">Assigned Technician <span class="text-red-500">*</span></label>
-                <select wire:model="technician_id" class="form-select">
+                <select x-select wire:model="technician_id" class="form-select">
                     <option value="">Select technician...</option>
                     @foreach($technicians as $tech)
                     <option value="{{ $tech->id }}">{{ $tech->name }}</option>

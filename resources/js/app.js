@@ -1,3 +1,5 @@
+import TomSelect from 'tom-select';
+
 // Dark mode initial state — runs before Alpine to prevent flash
 const darkModeKey = 'rsms_dark_mode';
 if (localStorage.getItem(darkModeKey) === 'true' ||
@@ -90,6 +92,32 @@ document.addEventListener('alpine:init', () => {
             this.toasts = this.toasts.filter(t => t.id !== id);
         }
     }));
+
+    // Tom Select directive — use x-select on any <select wire:model="...">
+    Alpine.directive('select', (el, { expression }, { cleanup }) => {
+        // Slight delay so Livewire wire:model is bound first
+        const ts = new TomSelect(el, {
+            allowEmptyOption: true,
+            maxOptions: 200,
+            plugins: ['clear_button'],
+        });
+
+        // Sync Tom Select → Livewire when user picks an option
+        ts.on('change', (value) => {
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Keep Tom Select in sync if Livewire updates the value externally
+        const observer = new MutationObserver(() => {
+            if (el.value !== ts.getValue()) {
+                ts.setValue(el.value, true);
+            }
+        });
+        observer.observe(el, { attributes: true, attributeFilter: ['value'] });
+
+        cleanup(() => { observer.disconnect(); ts.destroy(); });
+    });
 
     // Dark mode store
     Alpine.store('darkMode', {

@@ -11,7 +11,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
                 <div class="col-span-2">
                     <label class="form-label">Client <span class="text-red-500">*</span></label>
-                    <select wire:model="client_id" class="form-select">
+                    <select x-select wire:model="client_id" class="form-select">
                         <option value="">Select client...</option>
                         @foreach($clients as $client)
                         <option value="{{ $client->id }}">{{ $client->company_name }}</option>
