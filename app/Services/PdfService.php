@@ -14,7 +14,7 @@ class PdfService
     public function generateVisitReport(VisitReport $report): \Barryvdh\DomPDF\PDF
     {
         $report->load([
-            'client', 'technician', 'assetChecklists.asset',
+            'client', 'technician', 'assetChecklists.asset', 'assetChecklists.template',
             'networkChecklist', 'findings', 'photos',
         ]);
 

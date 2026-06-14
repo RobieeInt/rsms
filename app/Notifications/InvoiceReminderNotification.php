@@ -3,15 +3,12 @@
 namespace App\Notifications;
 
 use App\Models\Invoice;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class InvoiceReminderNotification extends Notification implements ShouldQueue
+class InvoiceReminderNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public Invoice $invoice,
         public string $reminderType
@@ -19,46 +16,59 @@ class InvoiceReminderNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        $subject = match ($this->reminderType) {
-            '7_days_before' => 'Payment Reminder - 7 Days Until Due',
-            '3_days_before' => 'Payment Reminder - 3 Days Until Due',
-            'due_today' => 'Payment Due Today - ' . $this->invoice->invoice_number,
-            '7_days_overdue' => 'OVERDUE - Invoice ' . $this->invoice->invoice_number,
-            default => 'Invoice Payment Reminder',
+        Carbon::setLocale('id');
+
+        $number = $this->invoice->invoice_number;
+        $amount = 'Rp ' . number_format($this->invoice->total_amount, 0, ',', '.');
+        $due    = $this->invoice->due_date->locale('id')->translatedFormat('d F Y');
+
+        [$subject, $intro, $urgency] = match ($this->reminderType) {
+            '7_days_before' => [
+                "Pengingat Pembayaran Invoice {$number} — 7 Hari Lagi",
+                'Invoice Anda akan jatuh tempo dalam **7 hari**.',
+                'Mohon segera lakukan persiapan pembayaran.',
+            ],
+            '3_days_before' => [
+                "Pengingat Pembayaran Invoice {$number} — 3 Hari Lagi",
+                'Invoice Anda akan jatuh tempo dalam **3 hari**.',
+                'Segera lakukan pembayaran sebelum tanggal jatuh tempo.',
+            ],
+            'due_today' => [
+                "Invoice {$number} Jatuh Tempo Hari Ini",
+                'Invoice Anda **jatuh tempo hari ini**.',
+                'Harap lakukan pembayaran secepatnya untuk menghindari keterlambatan.',
+            ],
+            '7_days_overdue' => [
+                "⚠️ Invoice {$number} Telah Melewati Jatuh Tempo 7 Hari",
+                'Invoice Anda telah **melewati tanggal jatuh tempo selama 7 hari**.',
+                'Mohon segera hubungi kami dan lakukan pembayaran untuk menghindari dampak lebih lanjut.',
+            ],
+            default => [
+                "Pengingat Invoice {$number}",
+                'Harap periksa invoice Anda.',
+                '',
+            ],
         };
 
-        $message = match ($this->reminderType) {
-            '7_days_before' => 'Your invoice is due in 7 days.',
-            '3_days_before' => 'Your invoice is due in 3 days.',
-            'due_today' => 'Your invoice payment is due today.',
-            '7_days_overdue' => 'Your invoice is 7 days overdue. Please arrange payment immediately.',
-            default => 'Please review your invoice.',
-        };
-
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject($subject)
-            ->greeting('Dear ' . $notifiable->pic_name . ',')
-            ->line($message)
-            ->line('**Invoice Number:** ' . $this->invoice->invoice_number)
-            ->line('**Amount:** Rp ' . number_format($this->invoice->total_amount, 0, ',', '.'))
-            ->line('**Due Date:** ' . $this->invoice->due_date->format('d F Y'))
-            ->line('Please arrange payment at your earliest convenience.')
-            ->salutation('Best regards, Reconext Digital Kreasi');
-    }
+            ->greeting('Yth. ' . ($notifiable->pic_name ?? 'Bapak/Ibu') . ',')
+            ->line($intro)
+            ->line('**No. Invoice:** ' . $number)
+            ->line('**Jumlah:** ' . $amount)
+            ->line('**Tanggal Jatuh Tempo:** ' . $due);
 
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'type' => 'invoice_reminder',
-            'title' => 'Invoice Payment Reminder',
-            'message' => 'Invoice ' . $this->invoice->invoice_number . ' payment reminder.',
-            'invoice_id' => $this->invoice->id,
-            'reminder_type' => $this->reminderType,
-        ];
+        if ($urgency) {
+            $mail->line($urgency);
+        }
+
+        return $mail
+            ->action('Lihat Invoice', route('invoices.show', $this->invoice))
+            ->salutation('Terima kasih,<br>Reconext Digital Kreasi');
     }
 }

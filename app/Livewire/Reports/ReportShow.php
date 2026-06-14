@@ -32,7 +32,7 @@ class ReportShow extends Component
     {
         $this->report->load([
             'client', 'technician', 'schedule',
-            'assetChecklists.asset', 'networkChecklist',
+            'assetChecklists.asset', 'assetChecklists.template', 'networkChecklist',
             'findings', 'photos',
         ]);
 

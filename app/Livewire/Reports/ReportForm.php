@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Models\Asset;
 use App\Models\AssetChecklist;
+use App\Models\ChecklistTemplate;
 use App\Models\NetworkChecklist;
 use App\Models\Schedule;
 use App\Models\VisitReport;
@@ -56,37 +57,65 @@ class ReportForm extends Component
 
         $this->schedule = $schedule;
 
-        // Initialize asset checklists — only pre-populate data, selection controls visibility
+        // Initialize asset checklists using templates
         $assets = $schedule->client->assets;
         foreach ($assets as $asset) {
             $existing = $report ? $report->assetChecklists->where('asset_id', $asset->id)->first() : null;
-            // When editing, pre-select assets that already have checklists
             if ($existing) {
                 $this->selectedAssetIds[] = $asset->id;
             }
-            $this->assetChecklists[$asset->id] = [
-                'asset_id' => $asset->id,
-                'asset_name' => $asset->asset_name,
-                'storage_check' => $existing->storage_check ?? 'na',
-                'storage_check_notes' => $existing->storage_check_notes ?? '',
-                'ram_check' => $existing->ram_check ?? 'na',
-                'ram_check_notes' => $existing->ram_check_notes ?? '',
-                'temp_files_cleanup' => $existing->temp_files_cleanup ?? 'na',
-                'temp_files_cleanup_notes' => $existing->temp_files_cleanup_notes ?? '',
-                'ssd_health_check' => $existing->ssd_health_check ?? 'na',
-                'ssd_health_check_notes' => $existing->ssd_health_check_notes ?? '',
-                'windows_update_check' => $existing->windows_update_check ?? 'na',
-                'windows_update_check_notes' => $existing->windows_update_check_notes ?? '',
-                'driver_check' => $existing->driver_check ?? 'na',
-                'driver_check_notes' => $existing->driver_check_notes ?? '',
-                'virus_scan' => $existing->virus_scan ?? 'na',
-                'virus_scan_notes' => $existing->virus_scan_notes ?? '',
-                'printer_check' => $existing->printer_check ?? 'na',
-                'printer_check_notes' => $existing->printer_check_notes ?? '',
-                'hardware_cleaning' => $existing->hardware_cleaning ?? 'na',
-                'hardware_cleaning_notes' => $existing->hardware_cleaning_notes ?? '',
-                'general_notes' => $existing->general_notes ?? '',
-            ];
+
+            $template = ChecklistTemplate::forAssetType($asset->asset_type);
+
+            if ($template) {
+                // Template-based: load results from JSON or defaults
+                $savedResults = $existing?->results ?? [];
+                $items = [];
+                foreach ($template->items as $item) {
+                    $saved = $savedResults[$item['key']] ?? null;
+                    $items[$item['key']] = [
+                        'result' => $saved['result'] ?? 'na',
+                        'notes'  => $saved['notes']  ?? '',
+                    ];
+                }
+                $this->assetChecklists[$asset->id] = [
+                    'asset_id'       => $asset->id,
+                    'asset_name'     => $asset->asset_name,
+                    'asset_type'     => $asset->asset_type,
+                    'template_id'    => $template->id,
+                    'template_name'  => $template->name,
+                    'template_items' => $template->items, // [{key, label}]
+                    'items'          => $items,            // {key: {result, notes}}
+                    'general_notes'  => $existing?->general_notes ?? '',
+                ];
+            } else {
+                // Legacy hardcoded fallback
+                $this->assetChecklists[$asset->id] = [
+                    'asset_id'    => $asset->id,
+                    'asset_name'  => $asset->asset_name,
+                    'asset_type'  => $asset->asset_type,
+                    'template_id' => null,
+                    'storage_check'            => $existing?->storage_check            ?? 'na',
+                    'storage_check_notes'      => $existing?->storage_check_notes      ?? '',
+                    'ram_check'                => $existing?->ram_check                ?? 'na',
+                    'ram_check_notes'          => $existing?->ram_check_notes          ?? '',
+                    'temp_files_cleanup'       => $existing?->temp_files_cleanup       ?? 'na',
+                    'temp_files_cleanup_notes' => $existing?->temp_files_cleanup_notes ?? '',
+                    'ssd_health_check'         => $existing?->ssd_health_check         ?? 'na',
+                    'ssd_health_check_notes'   => $existing?->ssd_health_check_notes   ?? '',
+                    'windows_update_check'     => $existing?->windows_update_check     ?? 'na',
+                    'windows_update_check_notes'=> $existing?->windows_update_check_notes ?? '',
+                    'driver_check'             => $existing?->driver_check             ?? 'na',
+                    'driver_check_notes'       => $existing?->driver_check_notes       ?? '',
+                    'virus_scan'               => $existing?->virus_scan               ?? 'na',
+                    'virus_scan_notes'         => $existing?->virus_scan_notes         ?? '',
+                    'printer_check'            => $existing?->printer_check            ?? 'na',
+                    'printer_check_notes'      => $existing?->printer_check_notes      ?? '',
+                    'hardware_cleaning'        => $existing?->hardware_cleaning        ?? 'na',
+                    'hardware_cleaning_notes'  => $existing?->hardware_cleaning_notes  ?? '',
+                    'general_notes'            => $existing?->general_notes            ?? '',
+                ];
+            }
         }
 
         if ($report && $report->networkChecklist) {
@@ -119,18 +148,29 @@ class ReportForm extends Component
         // Save asset checklists only for selected assets
         foreach ($this->assetChecklists as $assetId => $checklist) {
             if (!in_array((int) $assetId, array_map('intval', $this->selectedAssetIds))) {
-                // Remove checklist if asset was deselected
-                AssetChecklist::where('visit_report_id', $report->id)
-                    ->where('asset_id', $assetId)
-                    ->delete();
+                AssetChecklist::where('visit_report_id', $report->id)->where('asset_id', $assetId)->delete();
                 continue;
             }
-            $assetData = array_merge($checklist, ['visit_report_id' => $report->id]);
-            unset($assetData['asset_name']);
-            AssetChecklist::updateOrCreate(
-                ['visit_report_id' => $report->id, 'asset_id' => $assetId],
-                $assetData
-            );
+
+            if ($checklist['template_id']) {
+                // Template-based save
+                AssetChecklist::updateOrCreate(
+                    ['visit_report_id' => $report->id, 'asset_id' => $assetId],
+                    [
+                        'template_id'  => $checklist['template_id'],
+                        'results'      => $checklist['items'],
+                        'general_notes'=> $checklist['general_notes'],
+                    ]
+                );
+            } else {
+                // Legacy hardcoded save
+                $assetData = array_diff_key($checklist, array_flip(['asset_name', 'asset_type', 'template_id', 'template_items', 'items']));
+                $assetData['visit_report_id'] = $report->id;
+                AssetChecklist::updateOrCreate(
+                    ['visit_report_id' => $report->id, 'asset_id' => $assetId],
+                    $assetData
+                );
+            }
         }
 
         // Save network checklist

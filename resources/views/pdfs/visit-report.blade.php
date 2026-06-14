@@ -213,6 +213,8 @@ html, body {
 
     {{-- ── ASSET CHECKLISTS ── --}}
     @foreach($report->assetChecklists as $checklist)
+    @php $resolvedItems = $checklist->getResolvedItems(); @endphp
+    @if(count($resolvedItems))
     <div class="section avoid-break">
         <div class="section-title">Aset: {{ $checklist->asset->asset_name }} &mdash; {{ $checklist->asset->asset_code }}</div>
         <table class="chk-table">
@@ -224,33 +226,28 @@ html, body {
                 </tr>
             </thead>
             <tbody>
-                @foreach([
-                    'storage_check'      => 'Storage Check',
-                    'ram_check'          => 'RAM Usage',
-                    'temp_files_cleanup' => 'Temp Files Cleanup',
-                    'ssd_health_check'   => 'SSD Health',
-                    'windows_update_check' => 'Windows Update',
-                    'driver_check'       => 'Driver Check',
-                    'virus_scan'         => 'Virus Scan',
-                    'printer_check'      => 'Printer Check',
-                    'hardware_cleaning'  => 'Hardware Cleaning',
-                ] as $field => $label)
-                @php $v = $checklist->$field; @endphp
-                @if($v && $v !== 'na')
+                @foreach($resolvedItems as $item)
                 <tr>
-                    <td>{{ $label }}</td>
+                    <td>{{ $item['label'] }}</td>
                     <td class="c">
-                        <span class="{{ $v === 'passed' ? 'ok' : ($v === 'failed' ? 'fail' : 'na') }}">
-                            {{ $v === 'passed' ? 'OK' : ($v === 'failed' ? 'GAGAL' : 'N/A') }}
+                        <span class="{{ $item['result'] === 'passed' ? 'ok' : ($item['result'] === 'failed' ? 'fail' : 'na') }}">
+                            {{ $item['result'] === 'passed' ? 'OK' : ($item['result'] === 'failed' ? 'GAGAL' : 'N/A') }}
                         </span>
                     </td>
-                    <td style="color:#555;">{{ $checklist->{$field.'_notes'} ?? '' }}</td>
+                    <td style="color:#555;">{{ $item['notes'] }}</td>
+                </tr>
+                @endforeach
+                @if($checklist->general_notes)
+                <tr>
+                    <td colspan="3" style="color:#555; font-style:italic; border-top: 1px solid #D8D0C4;">
+                        <strong>Catatan:</strong> {{ $checklist->general_notes }}
+                    </td>
                 </tr>
                 @endif
-                @endforeach
             </tbody>
         </table>
     </div>
+    @endif
     @endforeach
 
     {{-- ── NETWORK CHECKLIST ── --}}

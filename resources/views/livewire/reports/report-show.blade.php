@@ -39,18 +39,30 @@
 
         {{-- Asset Checklists --}}
         @foreach($report->assetChecklists as $checklist)
-        <div class="card p-6">
-            <h3 class="font-semibold text-slate-900 dark:text-white mb-4">{{ $checklist->asset->asset_name }}</h3>
-            <div class="grid grid-cols-3 gap-3 text-sm">
-                @foreach(['storage_check' => 'Storage', 'ram_check' => 'RAM', 'temp_files_cleanup' => 'Temp Files', 'ssd_health_check' => 'SSD Health', 'windows_update_check' => 'Windows Update', 'driver_check' => 'Drivers', 'virus_scan' => 'Virus Scan', 'printer_check' => 'Printer', 'hardware_cleaning' => 'HW Cleaning'] as $field => $label)
-                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-750">
-                    <span class="text-slate-600 dark:text-slate-400">{{ $label }}</span>
-                    @php $v = $checklist->$field; $vc = ['passed' => 'text-emerald-600', 'failed' => 'text-red-500', 'na' => 'text-slate-400']; @endphp
-                    <span class="font-semibold {{ $vc[$v] ?? '' }}">{{ strtoupper($v) }}</span>
+        @php $resolvedItems = $checklist->getResolvedItems(); @endphp
+        @if(count($resolvedItems))
+        <div class="card p-4 lg:p-6">
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                {{ $checklist->asset->asset_name }}
+                <span class="text-xs font-normal text-slate-400">{{ $checklist->asset->asset_code }}</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                @foreach($resolvedItems as $item)
+                @php $vc = ['passed' => 'text-emerald-600 dark:text-emerald-400', 'failed' => 'text-red-500 dark:text-red-400', 'na' => 'text-slate-400']; @endphp
+                <div class="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span class="text-slate-600 dark:text-slate-400 text-xs leading-tight">{{ $item['label'] }}</span>
+                    <span class="font-semibold text-xs shrink-0 {{ $vc[$item['result']] ?? 'text-slate-400' }}">
+                        {{ $item['result'] === 'passed' ? 'OK' : ($item['result'] === 'failed' ? 'GAGAL' : 'N/A') }}
+                    </span>
                 </div>
                 @endforeach
             </div>
+            @if($checklist->general_notes)
+            <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 italic">{{ $checklist->general_notes }}</p>
+            @endif
         </div>
+        @endif
         @endforeach
 
         {{-- Network Checklist --}}

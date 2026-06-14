@@ -53,45 +53,62 @@
         @foreach($assetChecklists as $assetId => $checklist)
         @if(in_array($assetId, $selectedAssetIds))
         <div class="card p-4 lg:p-6">
-            <h3 class="font-semibold text-slate-900 dark:text-white mb-4">
-                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
                 {{ $checklist['asset_name'] }}
             </h3>
+            @if($checklist['template_id'])
+            <p class="text-xs text-violet-500 dark:text-violet-400 mb-4">Template: {{ $checklist['template_name'] }}</p>
+            @endif
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 dark:border-slate-700">
-                            <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400 w-48">Item</th>
-                            <th class="py-2 text-center font-medium text-slate-600 dark:text-slate-400 w-24">Passed</th>
-                            <th class="py-2 text-center font-medium text-slate-600 dark:text-slate-400 w-24">Failed</th>
-                            <th class="py-2 text-center font-medium text-slate-600 dark:text-slate-400 w-24">N/A</th>
-                            <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400">Notes</th>
+                            <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400">Item Pemeriksaan</th>
+                            <th class="py-2 text-center font-medium text-emerald-600 dark:text-emerald-400 w-16">OK</th>
+                            <th class="py-2 text-center font-medium text-red-500 dark:text-red-400 w-16">Gagal</th>
+                            <th class="py-2 text-center font-medium text-slate-400 w-16">N/A</th>
+                            <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400">Catatan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                        @foreach(['storage_check' => 'Storage Check', 'ram_check' => 'RAM Usage', 'temp_files_cleanup' => 'Temp Files Cleanup', 'ssd_health_check' => 'SSD Health', 'windows_update_check' => 'Windows Update', 'driver_check' => 'Driver Check', 'virus_scan' => 'Virus Scan', 'printer_check' => 'Printer Check', 'hardware_cleaning' => 'Hardware Cleaning'] as $field => $label)
-                        <tr>
-                            <td class="py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ $label }}</td>
-                            <td class="py-2.5 text-center">
-                                <input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="passed" class="text-emerald-500 focus:ring-emerald-500">
-                            </td>
-                            <td class="py-2.5 text-center">
-                                <input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="failed" class="text-red-500 focus:ring-red-500">
-                            </td>
-                            <td class="py-2.5 text-center">
-                                <input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="na" class="text-slate-400 focus:ring-slate-400">
-                            </td>
-                            <td class="py-2.5">
-                                <input type="text" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}_notes" class="form-input py-1 text-xs" placeholder="Notes...">
-                            </td>
-                        </tr>
-                        @endforeach
+                        @if($checklist['template_id'])
+                            {{-- Template-based rows --}}
+                            @foreach($checklist['template_items'] as $item)
+                            <tr>
+                                <td class="py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ $item['label'] }}</td>
+                                <td class="py-2.5 text-center">
+                                    <input type="radio" wire:model="assetChecklists.{{ $assetId }}.items.{{ $item['key'] }}.result" value="passed" class="text-emerald-500 focus:ring-emerald-500 w-4 h-4">
+                                </td>
+                                <td class="py-2.5 text-center">
+                                    <input type="radio" wire:model="assetChecklists.{{ $assetId }}.items.{{ $item['key'] }}.result" value="failed" class="text-red-500 focus:ring-red-500 w-4 h-4">
+                                </td>
+                                <td class="py-2.5 text-center">
+                                    <input type="radio" wire:model="assetChecklists.{{ $assetId }}.items.{{ $item['key'] }}.result" value="na" class="text-slate-400 focus:ring-slate-400 w-4 h-4">
+                                </td>
+                                <td class="py-2.5">
+                                    <input type="text" wire:model="assetChecklists.{{ $assetId }}.items.{{ $item['key'] }}.notes" class="form-input py-1 text-xs" placeholder="Catatan...">
+                                </td>
+                            </tr>
+                            @endforeach
+                        @else
+                            {{-- Legacy hardcoded rows --}}
+                            @foreach(['storage_check' => 'Storage Check', 'ram_check' => 'RAM Usage', 'temp_files_cleanup' => 'Temp Files Cleanup', 'ssd_health_check' => 'SSD Health', 'windows_update_check' => 'Windows Update', 'driver_check' => 'Driver Check', 'virus_scan' => 'Virus Scan', 'printer_check' => 'Printer Check', 'hardware_cleaning' => 'Hardware Cleaning'] as $field => $label)
+                            <tr>
+                                <td class="py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ $label }}</td>
+                                <td class="py-2.5 text-center"><input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="passed" class="text-emerald-500 focus:ring-emerald-500 w-4 h-4"></td>
+                                <td class="py-2.5 text-center"><input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="failed" class="text-red-500 focus:ring-red-500 w-4 h-4"></td>
+                                <td class="py-2.5 text-center"><input type="radio" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}" value="na" class="text-slate-400 focus:ring-slate-400 w-4 h-4"></td>
+                                <td class="py-2.5"><input type="text" wire:model="assetChecklists.{{ $assetId }}.{{ $field }}_notes" class="form-input py-1 text-xs" placeholder="Catatan..."></td>
+                            </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
             <div class="mt-4">
-                <label class="form-label text-xs">General Notes for this Asset</label>
-                <textarea wire:model="assetChecklists.{{ $assetId }}.general_notes" rows="2" class="form-input text-sm" placeholder="Additional observations..."></textarea>
+                <label class="form-label text-xs">Catatan Umum Aset Ini</label>
+                <textarea wire:model="assetChecklists.{{ $assetId }}.general_notes" rows="2" class="form-input text-sm" placeholder="Observasi tambahan..."></textarea>
             </div>
         </div>
         @endif
