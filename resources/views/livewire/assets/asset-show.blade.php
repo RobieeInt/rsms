@@ -45,7 +45,7 @@
                     <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $checklist->created_at->format('d M Y') }}</div>
                 </div>
                 @empty
-                <div class="p-10 text-center text-sm text-slate-500 dark:text-slate-400">No maintenance history yet</div>
+                <div class="p-10 text-center text-sm text-slate-500 dark:text-slate-400">Belum ada riwayat kunjungan</div>
                 @endforelse
             </div>
         </div>
@@ -61,11 +61,11 @@
 
             <div class="card p-6">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-slate-900 dark:text-white">Open Findings</h3>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Temuan Terbuka</h3>
                     <span class="badge-gray">{{ $asset->findings->where('status', '!=', 'resolved')->count() }}</span>
                 </div>
                 @foreach($asset->findings->where('status', '!=', 'resolved') as $finding)
-                <a href="{{ route('findings.show', $finding) }}" class="flex items-center gap-2 py-2 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <a href="{{ route('findings.show', $finding) }}" class="flex items-center gap-2 py-2 hover:text-stone-600 dark:hover:text-stone-400 transition-colors">
                     <span class="{{ $finding->getSeverityBadgeClass() }}">{{ ucfirst($finding->severity) }}</span>
                     <span class="text-sm text-slate-700 dark:text-slate-300 truncate">{{ $finding->title }}</span>
                 </a>

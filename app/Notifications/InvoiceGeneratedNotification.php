@@ -14,7 +14,17 @@ class InvoiceGeneratedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type'       => 'invoice_generated',
+            'title'      => 'Invoice Dikirim',
+            'message'    => 'Invoice ' . $this->invoice->invoice_number . ' telah dikirim ke klien.',
+            'invoice_id' => $this->invoice->id,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

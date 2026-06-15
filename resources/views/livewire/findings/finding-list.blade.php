@@ -56,7 +56,7 @@
                     <tr>
                         <td data-label="Finding">
                             <div>
-                                <a href="{{ route('findings.show', $finding) }}" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400">
+                                <a href="{{ route('findings.show', $finding) }}" class="font-medium text-slate-900 dark:text-white hover:text-stone-600 dark:hover:text-stone-400">
                                     {{ $finding->title }}
                                 </a>
                                 @if($finding->category)

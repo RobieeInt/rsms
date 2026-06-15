@@ -3,6 +3,8 @@
 namespace App\Livewire\Schedules;
 
 use App\Models\Schedule;
+use App\Models\User;
+use App\Notifications\AdminAlertNotification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -41,6 +43,13 @@ class ScheduleShow extends Component
         $this->showCheckinModal = false;
         $this->dispatch('notify', message: 'Checked in successfully!', type: 'success');
         $this->schedule->refresh();
+
+        $this->notifyAdmins(
+            'Teknisi Check In',
+            $this->schedule->technician->name . ' telah check in ke ' . $this->schedule->client->company_name . ' pukul ' . now()->format('H:i'),
+            'info',
+            route('schedules.show', $this->schedule)
+        );
     }
 
     public function checkOut(): void
@@ -62,6 +71,19 @@ class ScheduleShow extends Component
         $this->showCheckoutModal = false;
         $this->dispatch('notify', message: 'Checked out successfully!', type: 'success');
         $this->schedule->refresh();
+
+        $this->notifyAdmins(
+            'Teknisi Check Out',
+            $this->schedule->technician->name . ' telah selesai kunjungan di ' . $this->schedule->client->company_name . ' pukul ' . now()->format('H:i'),
+            'success',
+            route('schedules.show', $this->schedule)
+        );
+    }
+
+    private function notifyAdmins(string $title, string $message, string $type = 'info', ?string $url = null): void
+    {
+        $notif = new AdminAlertNotification($title, $message, $type, $url);
+        User::role('admin')->each(fn($admin) => $admin->notifyNow($notif));
     }
 
     public function cancel(): void

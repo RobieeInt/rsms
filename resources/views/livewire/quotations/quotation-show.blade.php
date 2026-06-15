@@ -60,7 +60,7 @@
                         <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Discount</span><span>-Rp {{ number_format($quotation->discount_amount, 0, ',', '.') }}</span></div>
                         @endif
                         <div class="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-2 text-slate-900 dark:text-white">
-                            <span>Total</span><span class="text-violet-600 dark:text-violet-400">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</span>
+                            <span>Total</span><span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
             @if($quotation->invoice)
             <div class="card p-5">
                 <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Invoice</h3>
-                <a href="{{ route('invoices.show', $quotation->invoice) }}" class="text-sm text-violet-600 dark:text-violet-400 hover:underline">
+                <a href="{{ route('invoices.show', $quotation->invoice) }}" class="text-sm text-stone-600 dark:text-stone-400 hover:underline">
                     {{ $quotation->invoice->invoice_number }}
                 </a>
             </div>

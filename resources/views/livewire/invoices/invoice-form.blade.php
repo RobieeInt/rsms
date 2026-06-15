@@ -102,7 +102,7 @@
                     </div>
                     <div class="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-2 text-slate-900 dark:text-white">
                         <span>Total</span>
-                        <span class="text-violet-600 dark:text-violet-400">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
+                        <span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>

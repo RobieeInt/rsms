@@ -61,7 +61,7 @@
                     @forelse($invoices as $invoice)
                     @php $sc = ['draft' => 'badge-gray', 'sent' => 'badge-blue', 'paid' => 'badge-green', 'overdue' => 'badge-red', 'cancelled' => 'badge-gray']; @endphp
                     <tr>
-                        <td data-label="Invoice"><span class="font-mono text-sm text-violet-600 dark:text-violet-400">{{ $invoice->invoice_number }}</span></td>
+                        <td data-label="Invoice"><span class="font-mono text-sm text-stone-600 dark:text-stone-400">{{ $invoice->invoice_number }}</span></td>
                         <td data-label="Klien" class="font-medium text-slate-900 dark:text-white">{{ $invoice->client->company_name }}</td>
                         <td data-label="Tipe"><span class="badge-gray">{{ ucfirst($invoice->type) }}</span></td>
                         <td data-label="Tanggal" class="text-sm">{{ $invoice->invoice_date->format('d M Y') }}</td>

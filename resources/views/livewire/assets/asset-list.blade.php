@@ -53,15 +53,15 @@
                 <tbody>
                     @forelse($assets as $asset)
                     <tr>
-                        <td data-label="Kode"><span class="font-mono text-xs text-violet-600 dark:text-violet-400">{{ $asset->asset_code }}</span></td>
+                        <td data-label="Kode"><span class="font-mono text-xs text-stone-600 dark:text-stone-400">{{ $asset->asset_code }}</span></td>
                         <td data-label="Nama">
-                            <a href="{{ route('assets.show', $asset) }}" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400">
+                            <a href="{{ route('assets.show', $asset) }}" class="font-medium text-slate-900 dark:text-white hover:text-stone-600 dark:hover:text-stone-400">
                                 {{ $asset->asset_name }}
                             </a>
                         </td>
                         <td data-label="Tipe">{{ $asset->getTypeLabel() }}</td>
                         <td data-label="Klien">
-                            <a href="{{ route('clients.show', $asset->client) }}" class="text-violet-600 dark:text-violet-400 hover:underline text-sm">
+                            <a href="{{ route('clients.show', $asset->client) }}" class="text-stone-600 dark:text-stone-400 hover:underline text-sm">
                                 {{ $asset->client->company_name }}
                             </a>
                         </td>

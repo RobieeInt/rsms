@@ -3,15 +3,13 @@
 namespace App\Notifications;
 
 use App\Models\VisitReport;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Services\PdfService;
+use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class VisitReportSentNotification extends Notification implements ShouldQueue
+class VisitReportSentNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(public VisitReport $report) {}
 
     public function via(object $notifiable): array
@@ -21,20 +19,30 @@ class VisitReportSentNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        Carbon::setLocale('id');
+
         $report   = $this->report;
         $schedule = $report->schedule;
+        $filename = $report->report_number . '.pdf';
+        $pdf      = app(PdfService::class)->generateVisitReport($report)->output();
 
-        return (new MailMessage)
-            ->subject('Laporan Kunjungan ' . $report->report_number . ' - Reconext Digital Kreasi')
-            ->greeting('Dear ' . $notifiable->pic_name . ',')
+        $mail = (new MailMessage)
+            ->subject('Laporan Kunjungan ' . $report->report_number . ' — Reconext Digital Kreasi')
+            ->greeting('Yth. ' . ($notifiable->pic_name ?? 'Bapak/Ibu') . ',')
             ->line('Berikut adalah laporan kunjungan maintenance IT yang telah selesai dilaksanakan.')
             ->line('**No. Laporan:** ' . $report->report_number)
             ->line('**Tanggal Kunjungan:** ' . $schedule->visit_date->locale('id')->translatedFormat('d F Y'))
-            ->line('**Teknisi:** ' . $report->technician->name)
-            ->when($report->summary, fn($m) => $m->line('**Ringkasan:** ' . $report->summary))
-            ->action('Lihat Laporan', route('reports.show', $report))
-            ->line('Terima kasih atas kepercayaan Anda kepada layanan kami.')
-            ->salutation('Salam, Reconext Digital Kreasi');
+            ->line('**Teknisi:** ' . $report->technician->name);
+
+        if ($report->summary) {
+            $mail->line('**Ringkasan:** ' . $report->summary);
+        }
+
+        return $mail
+            ->action('Download Laporan PDF', $report->getPublicPdfUrl())
+            ->line('Laporan juga terlampir dalam email ini sebagai file PDF.')
+            ->salutation('Terima kasih, Reconext Digital Kreasi')
+            ->attachData($pdf, $filename, ['mime' => 'application/pdf']);
     }
 
     public function toArray(object $notifiable): array

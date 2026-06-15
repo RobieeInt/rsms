@@ -33,12 +33,12 @@
                 @foreach($availableAssets as $asset)
                 <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition
                     {{ in_array($asset->id, $selectedAssetIds)
-                        ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/20 dark:border-violet-500'
+                        ? 'border-stone-400 bg-stone-50 dark:bg-stone-900/20 dark:border-stone-500'
                         : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600' }}">
                     <input type="checkbox"
                         wire:model.live="selectedAssetIds"
                         value="{{ $asset->id }}"
-                        class="rounded text-violet-600 focus:ring-violet-500">
+                        class="rounded text-stone-600 focus:ring-stone-500">
                     <div class="min-w-0">
                         <div class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $asset->asset_name }}</div>
                         <div class="text-xs text-slate-500 dark:text-slate-400">{{ $asset->asset_code }}</div>
@@ -54,11 +54,11 @@
         @if(in_array($assetId, $selectedAssetIds))
         <div class="card p-4 lg:p-6">
             <h3 class="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-                <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
+                <svg class="w-4 h-4 text-stone-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
                 {{ $checklist['asset_name'] }}
             </h3>
             @if($checklist['template_id'])
-            <p class="text-xs text-violet-500 dark:text-violet-400 mb-4">Template: {{ $checklist['template_name'] }}</p>
+            <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Template: {{ $checklist['template_name'] }}</p>
             @endif
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

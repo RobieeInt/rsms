@@ -10,7 +10,7 @@
 ">
     <div class="page-header">
         <div>
-            <h2 class="page-title">Visit Schedule</h2>
+            <h2 class="page-title">Jadwal Kunjungan</h2>
             <p class="page-subtitle">{{ $schedule->client->company_name }} — {{ $schedule->visit_date->format('d F Y') }}</p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -33,7 +33,7 @@
             @endif
             <a href="{{ route('schedules.edit', $schedule) }}" class="btn-secondary">Edit</a>
             @endif
-            <a href="{{ route('schedules.index') }}" class="btn-secondary">Back</a>
+            <a href="{{ route('schedules.index') }}" class="btn-secondary">Kembali</a>
         </div>
     </div>
 
@@ -41,31 +41,31 @@
         <div class="lg:col-span-2 space-y-6">
             <div class="card p-6">
                 <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                    <div><dt class="text-slate-500 dark:text-slate-400">Client</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->client->company_name }}</dd></div>
-                    <div><dt class="text-slate-500 dark:text-slate-400">Technician</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->technician->name }}</dd></div>
-                    <div><dt class="text-slate-500 dark:text-slate-400">Visit Date</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->visit_date->format('d F Y') }}</dd></div>
-                    <div><dt class="text-slate-500 dark:text-slate-400">Time</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->start_time }}{{ $schedule->end_time ? ' – ' . $schedule->end_time : '' }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Klien</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->client->company_name }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Teknisi</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->technician->name }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Tanggal Kunjungan</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->visit_date->format('d F Y') }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Waktu</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $schedule->start_time }}{{ $schedule->end_time ? ' – ' . $schedule->end_time : '' }}</dd></div>
                     @if($schedule->checked_in_at)
-                    <div><dt class="text-slate-500 dark:text-slate-400">Checked In</dt><dd class="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $schedule->checked_in_at->format('d M Y H:i') }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Tiba di Lokasi</dt><dd class="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $schedule->checked_in_at->format('d M Y H:i') }}</dd></div>
                     @endif
                     @if($schedule->checked_out_at)
-                    <div><dt class="text-slate-500 dark:text-slate-400">Checked Out</dt><dd class="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $schedule->checked_out_at->format('d M Y H:i') }}</dd></div>
+                    <div><dt class="text-slate-500 dark:text-slate-400">Selesai Kunjungan</dt><dd class="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $schedule->checked_out_at->format('d M Y H:i') }}</dd></div>
                     @endif
                     @if($schedule->notes)
-                    <div class="col-span-2"><dt class="text-slate-500 dark:text-slate-400">Notes</dt><dd class="text-slate-700 dark:text-slate-300 mt-1">{{ $schedule->notes }}</dd></div>
+                    <div class="col-span-2"><dt class="text-slate-500 dark:text-slate-400">Catatan</dt><dd class="text-slate-700 dark:text-slate-300 mt-1">{{ $schedule->notes }}</dd></div>
                     @endif
                 </dl>
             </div>
 
             @if($schedule->visitReport)
             <div class="card p-6">
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Visit Report</h3>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Laporan Kunjungan</h3>
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="font-medium text-slate-900 dark:text-white">{{ $schedule->visitReport->report_number }}</div>
                         <div class="text-sm text-slate-500 dark:text-slate-400">{{ ucfirst($schedule->visitReport->status) }}</div>
                     </div>
-                    <a href="{{ route('reports.show', $schedule->visitReport) }}" class="btn-primary">View Report</a>
+                    <a href="{{ route('reports.show', $schedule->visitReport) }}" class="btn-primary">Lihat Laporan</a>
                 </div>
             </div>
             @endif
@@ -84,7 +84,7 @@
                 $isOwner = auth()->user()->hasRole('admin') || (int) auth()->id() === (int) $schedule->technician_id;
             @endphp
             <div class="card p-6 space-y-3">
-                <h3 class="font-semibold text-slate-900 dark:text-white">Actions</h3>
+                <h3 class="font-semibold text-slate-900 dark:text-white">Aksi</h3>
 
                 @if($schedule->status === 'scheduled' && $isOwner)
                 <button wire:click="$set('showCheckinModal', true)" class="btn-success w-full justify-center">
@@ -107,7 +107,7 @@
                 @endif
 
                 @if(in_array($schedule->status, ['scheduled', 'in_progress']) && auth()->user()->hasRole('admin'))
-                <button wire:click="cancel" wire:confirm="Cancel this schedule?" class="btn-danger w-full justify-center">Cancel Schedule</button>
+                <button wire:click="cancel" wire:confirm="Yakin batalkan jadwal ini?" class="btn-danger w-full justify-center">Batalkan Jadwal</button>
                 @endif
             </div>
         </div>
@@ -121,17 +121,17 @@
             <div class="space-y-4">
                 <div class="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
                     <span x-show="lat">📍 GPS: <span x-text="lat?.toFixed(6)"></span>, <span x-text="lng?.toFixed(6)"></span></span>
-                    <span x-show="!lat">Getting GPS location...</span>
+                    <span x-show="!lat">Mengambil lokasi GPS...</span>
                 </div>
                 <div>
-                    <label class="form-label">Check-in Photo (Optional)</label>
+                    <label class="form-label">Foto Check In (Optional)</label>
                     <input wire:model="photo" type="file" accept="image/*" class="form-input">
                     @error('photo')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
             </div>
             <div class="flex gap-3 mt-6">
                 <button wire:click="checkIn" class="btn-success flex-1 justify-center" wire:loading.attr="disabled">
-                    <span wire:loading.remove>Confirm Check In</span>
+                    <span wire:loading.remove>Konfirmasi Check In</span>
                     <span wire:loading>Processing...</span>
                 </button>
                 <button wire:click="$set('showCheckinModal', false)" class="btn-secondary">Cancel</button>
@@ -150,13 +150,13 @@
                     <span x-show="lat">📍 GPS: <span x-text="lat?.toFixed(6)"></span>, <span x-text="lng?.toFixed(6)"></span></span>
                 </div>
                 <div>
-                    <label class="form-label">Check-out Photo (Optional)</label>
+                    <label class="form-label">Foto Check Out (Optional)</label>
                     <input wire:model="photo" type="file" accept="image/*" class="form-input">
                 </div>
             </div>
             <div class="flex gap-3 mt-6">
                 <button wire:click="checkOut" class="btn-primary flex-1 justify-center" wire:loading.attr="disabled">
-                    <span wire:loading.remove>Confirm Check Out</span>
+                    <span wire:loading.remove>Konfirmasi Check Out</span>
                     <span wire:loading>Processing...</span>
                 </button>
                 <button wire:click="$set('showCheckoutModal', false)" class="btn-secondary">Cancel</button>

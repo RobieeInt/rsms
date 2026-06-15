@@ -65,4 +65,13 @@ class Quotation extends Model
     {
         return route('quotation.approve', ['token' => $this->approval_token]);
     }
+
+    public function getPublicPdfUrl(): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'quotation.pdf.public',
+            now()->addDays(30),
+            ['quotation' => $this->id]
+        );
+    }
 }

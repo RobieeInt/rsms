@@ -82,7 +82,7 @@
                 <div class="space-y-2">
                     @foreach(['open' => ['badge-red', 'Mark as Open'], 'monitoring' => ['badge-yellow', 'Mark as Monitoring'], 'resolved' => ['badge-green', 'Mark as Resolved']] as $status => [$cls, $label])
                     <button wire:click="updateStatus('{{ $status }}')"
-                        class="w-full text-left px-4 py-2.5 rounded-lg border text-sm transition-all {{ $finding->status === $status ? 'border-violet-400 bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-medium' : 'border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
+                        class="w-full text-left px-4 py-2.5 rounded-lg border text-sm transition-all {{ $finding->status === $status ? 'border-stone-400 bg-stone-50 dark:bg-stone-950 text-stone-700 dark:text-stone-300 font-medium' : 'border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
                         {{ $label }}
                     </button>
                     @endforeach

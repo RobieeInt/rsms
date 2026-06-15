@@ -7,12 +7,12 @@
     {{-- Stat Cards --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="stat-card">
-            <div class="stat-icon bg-violet-100 dark:bg-violet-900">
-                <svg class="w-6 h-6 text-violet-600 dark:text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <div class="stat-icon bg-stone-100 dark:bg-stone-900">
+                <svg class="w-6 h-6 text-stone-600 dark:text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['total_clients']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Active Clients</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Klien Aktif</div>
             </div>
         </div>
 
@@ -22,7 +22,7 @@
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['active_assets']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Active Assets</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total Aset</div>
             </div>
         </div>
 
@@ -32,7 +32,7 @@
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['upcoming_visits']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Upcoming Visits</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kunjungan Mendatang</div>
             </div>
         </div>
 
@@ -42,7 +42,7 @@
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['open_findings']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Open Findings</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Temuan Terbuka</div>
             </div>
         </div>
 
@@ -52,7 +52,7 @@
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['pending_quotations']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Quotations</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Penawaran Tertunda</div>
             </div>
         </div>
 
@@ -62,7 +62,7 @@
             </div>
             <div>
                 <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ number_format($stats['unpaid_invoices']) }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Unpaid Invoices</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Invoice Belum Bayar</div>
             </div>
         </div>
 
@@ -72,7 +72,7 @@
             </div>
             <div>
                 <div class="text-xl font-bold text-slate-900 dark:text-white">Rp {{ number_format($stats['monthly_revenue'], 0, ',', '.') }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Monthly Revenue</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pendapatan Bulan Ini</div>
             </div>
         </div>
 
@@ -82,7 +82,7 @@
             </div>
             <div>
                 <div class="text-xl font-bold text-slate-900 dark:text-white">Rp {{ number_format($stats['annual_revenue'], 0, ',', '.') }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Annual Revenue</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pendapatan Tahun Ini</div>
             </div>
         </div>
     </div>
@@ -93,14 +93,14 @@
         {{-- Upcoming Visits --}}
         <div class="lg:col-span-2 card">
             <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <h3 class="font-semibold text-slate-900 dark:text-white">Upcoming Visits</h3>
-                <a href="{{ route('schedules.index') }}" class="text-xs text-violet-600 dark:text-violet-400 hover:underline">View all</a>
+                <h3 class="font-semibold text-slate-900 dark:text-white">Kunjungan Mendatang</h3>
+                <a href="{{ route('schedules.index') }}" class="text-xs text-stone-600 dark:text-stone-400 hover:underline">Lihat semua</a>
             </div>
             <div class="divide-y divide-slate-100 dark:divide-slate-700">
                 @forelse($recentSchedules as $schedule)
                 <a href="{{ route('schedules.show', $schedule) }}" class="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
-                    <div class="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-violet-600 dark:text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <div class="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-900 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-stone-600 dark:text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $schedule->client->company_name }}</div>
@@ -114,7 +114,7 @@
                 @empty
                 <div class="px-5 py-12 text-center">
                     <svg class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">No upcoming visits</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Tidak ada kunjungan mendatang</p>
                 </div>
                 @endforelse
             </div>
@@ -122,11 +122,11 @@
 
         {{-- Right column --}}
         <div class="space-y-6">
-            {{-- Critical Findings --}}
+            {{-- Temuan Kritis --}}
             <div class="card">
                 <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <h3 class="font-semibold text-slate-900 dark:text-white">Critical Findings</h3>
-                    <a href="{{ route('findings.index') }}" class="text-xs text-violet-600 dark:text-violet-400 hover:underline">View all</a>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Temuan Kritis</h3>
+                    <a href="{{ route('findings.index') }}" class="text-xs text-stone-600 dark:text-stone-400 hover:underline">Lihat semua</a>
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-slate-700">
                     @forelse($recentFindings as $finding)
@@ -140,17 +140,17 @@
                     </a>
                     @empty
                     <div class="px-5 py-8 text-center">
-                        <p class="text-sm text-slate-500 dark:text-slate-400">No critical findings</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Tidak ada temuan kritis</p>
                     </div>
                     @endforelse
                 </div>
             </div>
 
-            {{-- Overdue Invoices --}}
+            {{-- Invoice Terlambat --}}
             <div class="card">
                 <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <h3 class="font-semibold text-slate-900 dark:text-white">Overdue Invoices</h3>
-                    <a href="{{ route('invoices.index') }}" class="text-xs text-violet-600 dark:text-violet-400 hover:underline">View all</a>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Invoice Terlambat</h3>
+                    <a href="{{ route('invoices.index') }}" class="text-xs text-stone-600 dark:text-stone-400 hover:underline">Lihat semua</a>
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-slate-700">
                     @forelse($overdueInvoices as $invoice)
@@ -166,7 +166,7 @@
                     </a>
                     @empty
                     <div class="px-5 py-8 text-center">
-                        <p class="text-sm text-slate-500 dark:text-slate-400">No overdue invoices</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Tidak ada invoice terlambat</p>
                     </div>
                     @endforelse
                 </div>
@@ -176,14 +176,14 @@
 
     {{-- Revenue Chart (simple bar chart using CSS) --}}
     <div class="card p-6">
-        <h3 class="font-semibold text-slate-900 dark:text-white mb-6">Revenue Trend (Last 12 Months)</h3>
+        <h3 class="font-semibold text-slate-900 dark:text-white mb-6">Tren Pendapatan (12 Bulan Terakhir)</h3>
         <div class="flex items-end gap-2 h-32">
             @php $maxRevenue = collect($revenueData)->max('revenue') ?: 1; @endphp
             @foreach($revenueData as $data)
             <div class="flex-1 flex flex-col items-center gap-1 group">
                 <div class="relative w-full">
                     <div
-                        class="w-full bg-violet-500 dark:bg-violet-600 rounded-t-sm group-hover:bg-violet-600 dark:group-hover:bg-violet-500 transition-colors cursor-default"
+                        class="w-full bg-stone-500 dark:bg-stone-600 rounded-t-sm group-hover:bg-stone-600 dark:group-hover:bg-stone-500 transition-colors cursor-default"
                         style="height: {{ max(4, ($data['revenue'] / $maxRevenue) * 120) }}px"
                         title="Rp {{ number_format($data['revenue'], 0, ',', '.') }}"
                     ></div>

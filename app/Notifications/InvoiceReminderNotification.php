@@ -17,7 +17,18 @@ class InvoiceReminderNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type'          => 'invoice_reminder',
+            'title'         => 'Reminder Invoice',
+            'message'       => 'Reminder pembayaran invoice ' . $this->invoice->invoice_number . ' telah dikirim.',
+            'invoice_id'    => $this->invoice->id,
+            'reminder_type' => $this->reminderType,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

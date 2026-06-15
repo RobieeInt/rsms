@@ -61,4 +61,13 @@ class VisitReport extends Model
         $last = static::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
         return 'RPT-' . $year . $month . '-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
     }
+
+    public function getPublicPdfUrl(): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'report.pdf.public',
+            now()->addDays(30),
+            ['report' => $this->id]
+        );
+    }
 }

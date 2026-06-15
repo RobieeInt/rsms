@@ -81,7 +81,7 @@
                         @endif
                         <div class="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-2 text-slate-900 dark:text-white">
                             <span>Total</span>
-                            <span class="text-violet-600 dark:text-violet-400">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</span>
+                            <span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 </div>
@@ -98,7 +98,7 @@
             @if($invoice->payment_proof)
             <div class="card p-5">
                 <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Payment Proof</h3>
-                <a href="{{ asset('storage/' . $invoice->payment_proof) }}" target="_blank" class="text-sm text-violet-600 dark:text-violet-400 hover:underline">View proof</a>
+                <a href="{{ asset('storage/' . $invoice->payment_proof) }}" target="_blank" class="text-sm text-stone-600 dark:text-stone-400 hover:underline">View proof</a>
             </div>
             @endif
 
@@ -117,7 +117,7 @@
                         $typeColor = match(true) {
                             str_contains($log->type, 'overdue') => 'text-red-500',
                             $log->type === 'due_today'          => 'text-orange-500',
-                            $log->type === 'sent'               => 'text-violet-500',
+                            $log->type === 'sent'               => 'text-stone-500',
                             default                             => 'text-blue-500',
                         };
                     @endphp

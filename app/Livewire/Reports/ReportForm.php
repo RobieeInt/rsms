@@ -7,8 +7,10 @@ use App\Models\AssetChecklist;
 use App\Models\ChecklistTemplate;
 use App\Models\NetworkChecklist;
 use App\Models\Schedule;
+use App\Models\User;
 use App\Models\VisitReport;
 use App\Models\VisitPhoto;
+use App\Notifications\AdminAlertNotification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -198,6 +200,16 @@ class ReportForm extends Component
         }
 
         $this->dispatch('notify', message: 'Report saved.', type: 'success');
+
+        if ($status === 'completed' && !auth()->user()->hasRole('admin')) {
+            $notif = new AdminAlertNotification(
+                'Laporan Kunjungan Baru',
+                auth()->user()->name . ' submit laporan ' . $report->report_number . ' untuk ' . $this->schedule->client->company_name,
+                'info',
+                route('reports.show', $report)
+            );
+            User::role('admin')->each(fn($admin) => $admin->notifyNow($notif));
+        }
 
         if ($status !== 'draft') {
             $this->redirect(route('reports.show', $report));

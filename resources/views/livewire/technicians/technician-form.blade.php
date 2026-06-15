@@ -45,7 +45,7 @@
                     @error('position')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
                 <div class="flex items-center gap-3 pt-6">
-                    <input wire:model="is_active" type="checkbox" id="is_active" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                    <input wire:model="is_active" type="checkbox" id="is_active" class="w-4 h-4 rounded border-slate-300 text-stone-600 focus:ring-stone-500">
                     <label for="is_active" class="text-sm font-medium text-slate-700 dark:text-slate-300">Active</label>
                 </div>
             </div>

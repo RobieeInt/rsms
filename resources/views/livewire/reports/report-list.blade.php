@@ -1,7 +1,7 @@
 <div>
     <div class="page-header">
         <div>
-            <h2 class="page-title">Visit Reports</h2>
+            <h2 class="page-title"Laporan Kunjungan</h2>
             <p class="page-subtitle">Semua laporan kunjungan maintenance</p>
         </div>
     </div>
@@ -43,7 +43,7 @@
                     @forelse($reports as $report)
                     @php $statusClasses = ['draft' => 'badge-yellow', 'completed' => 'badge-blue', 'signed' => 'badge-green']; @endphp
                     <tr>
-                        <td data-label="No. Report"><span class="font-mono text-sm text-violet-600 dark:text-violet-400">{{ $report->report_number }}</span></td>
+                        <td data-label="No. Report"><span class="font-mono text-sm text-stone-600 dark:text-stone-400">{{ $report->report_number }}</span></td>
                         <td data-label="Klien" class="font-medium text-slate-900 dark:text-white">{{ $report->client->company_name }}</td>
                         <td data-label="Teknisi">{{ $report->technician->name }}</td>
                         <td data-label="Tanggal">{{ $report->schedule->visit_date->format('d M Y') }}</td>

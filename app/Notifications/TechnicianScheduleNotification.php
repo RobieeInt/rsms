@@ -16,7 +16,18 @@ class TechnicianScheduleNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        $label = $this->type === 'reminder' ? 'Reminder Kunjungan Besok' : 'Jadwal Kunjungan Baru';
+        return [
+            'type'        => 'technician_schedule_' . $this->type,
+            'title'       => $label,
+            'message'     => $this->schedule->client->company_name . ' — ' . $this->schedule->visit_date->format('d M Y') . ' ' . $this->schedule->start_time,
+            'schedule_id' => $this->schedule->id,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

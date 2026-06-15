@@ -11,7 +11,7 @@
 <body class="h-full bg-slate-50 dark:bg-slate-900 font-sans antialiased flex items-center justify-center" x-data x-init="$store.darkMode.init()">
     <div class="w-full max-w-md px-4">
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-14 h-14 bg-violet-600 rounded-2xl mb-4 shadow-lg">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-stone-600 rounded-2xl mb-4 shadow-lg">
                 <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
                 </svg>
@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="flex items-center">
-                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-slate-300 text-stone-600 focus:ring-stone-500">
                     <label for="remember" class="ml-2 text-sm text-slate-600 dark:text-slate-400">Remember me</label>
                 </div>
 

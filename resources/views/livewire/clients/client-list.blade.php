@@ -51,11 +51,11 @@
                     <tr>
                         <td data-label="Perusahaan">
                             <div class="flex items-center gap-3">
-                                <div class="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-700 dark:text-violet-300 font-semibold text-sm shrink-0">
+                                <div class="h-8 w-8 rounded-full bg-stone-100 dark:bg-stone-900/30 flex items-center justify-center text-stone-700 dark:text-stone-300 font-semibold text-sm shrink-0">
                                     {{ strtoupper(substr($client->company_name, 0, 1)) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <a href="{{ route('clients.show', $client) }}" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 block truncate">
+                                    <a href="{{ route('clients.show', $client) }}" class="font-medium text-slate-900 dark:text-white hover:text-stone-600 dark:hover:text-stone-400 block truncate">
                                         {{ $client->company_name }}
                                     </a>
                                     <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $client->address ?? '-' }}</p>

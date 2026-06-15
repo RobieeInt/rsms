@@ -13,7 +13,17 @@ class ScheduleCreatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type'        => 'schedule_created',
+            'title'       => 'Jadwal Kunjungan Dibuat',
+            'message'     => 'Jadwal kunjungan ke ' . $this->schedule->client->company_name . ' pada ' . $this->schedule->visit_date->format('d M Y') . ' telah dibuat.',
+            'schedule_id' => $this->schedule->id,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

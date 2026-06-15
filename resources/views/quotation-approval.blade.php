@@ -10,9 +10,9 @@
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.5; }
         .container { max-width: 680px; margin: 40px auto; padding: 0 16px; }
         .header { text-align: center; margin-bottom: 32px; }
-        .logo { font-size: 24px; font-weight: 700; color: #7c3aed; margin-bottom: 8px; }
+        .logo { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
         .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-        .card-header { background: linear-gradient(135deg, #7c3aed, #6d28d9); padding: 24px; color: white; }
+        .card-header { background: linear-gradient(135deg, #1a1a1a, #333333); padding: 24px; color: white; }
         .card-header h1 { font-size: 20px; font-weight: 700; }
         .card-header p { opacity: 0.8; margin-top: 4px; font-size: 14px; }
         .card-body { padding: 24px; }
@@ -22,11 +22,11 @@
         td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
         td.right { text-align: right; font-weight: 600; }
         .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #64748b; }
-        .total-final { display: flex; justify-content: space-between; padding: 10px 0; font-size: 18px; font-weight: 700; color: #7c3aed; border-top: 2px solid #e2e8f0; margin-top: 4px; }
+        .total-final { display: flex; justify-content: space-between; padding: 10px 0; font-size: 18px; font-weight: 700; color: #1a1a1a; border-top: 2px solid #e2e8f0; margin-top: 4px; }
         .form-group { margin-bottom: 16px; }
         label { display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px; }
         input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
-        input:focus, textarea:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+        input:focus, textarea:focus { outline: none; border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; width: 100%; margin-bottom: 8px; transition: all 0.15s; }
         .btn-approve { background: #059669; color: white; }
         .btn-approve:hover { background: #047857; }
@@ -34,7 +34,7 @@
         .btn-reject:hover { background: #b91c1c; }
         .alert { padding: 14px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
         .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-        .alert-info { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .alert-info { background: #F0EBE0; color: #1a1a1a; border: 1px solid #D8D0C4; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .status-approved { background: #d1fae5; color: #065f46; }
         .status-rejected { background: #fee2e2; color: #991b1b; }
@@ -53,9 +53,16 @@
     @endif
 
     <div class="card">
-        <div class="card-header">
-            <h1>{{ $quotation->quotation_number }}</h1>
-            <p>From {{ $quotation->client->company_name }}</p>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1>{{ $quotation->quotation_number }}</h1>
+                <p>From {{ $quotation->client->company_name }}</p>
+            </div>
+            <a href="{{ $quotation->getPublicPdfUrl() }}" target="_blank"
+               style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(255,255,255,0.15); color: white; border-radius: 8px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid rgba(255,255,255,0.3);">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download PDF
+            </a>
         </div>
         <div class="card-body">
             <div style="display: flex; gap: 20px; margin-bottom: 20px;">
@@ -129,8 +136,19 @@
             </form>
             @elseif($quotation->status === 'approved')
             <div class="alert alert-success" style="margin-top: 20px;">
-                ✓ This quotation was approved by <strong>{{ $quotation->approved_by_name }}</strong> on {{ $quotation->approved_at->format('d F Y H:i') }}.
+                ✓ Quotation ini telah disetujui oleh <strong>{{ $quotation->approved_by_name }}</strong> pada {{ $quotation->approved_at->format('d F Y H:i') }}.
             </div>
+            @if($quotation->invoice)
+            <div style="margin-top: 16px; padding: 20px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Invoice telah dibuat dan dikirim ke email Anda.</div>
+                <a href="{{ URL::temporarySignedRoute('invoice.pdf.public', now()->addDays(7), ['invoice' => $quotation->invoice->id]) }}"
+                   target="_blank"
+                   style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #1a1a1a; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Lihat Invoice {{ $quotation->invoice->invoice_number }}
+                </a>
+            </div>
+            @endif
             @elseif($quotation->status === 'rejected')
             <div style="background: #fee2e2; color: #991b1b; padding: 14px 16px; border-radius: 8px; margin-top: 20px;">
                 ✗ This quotation was rejected by <strong>{{ $quotation->approved_by_name }}</strong>.

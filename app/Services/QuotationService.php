@@ -69,6 +69,6 @@ class QuotationService
     public function send(Quotation $quotation): void
     {
         $quotation->update(['status' => 'sent']);
-        $quotation->client->notify(new QuotationSentNotification($quotation));
+        $quotation->client->notifyNow(new QuotationSentNotification($quotation));
     }
 }

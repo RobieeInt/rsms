@@ -47,7 +47,7 @@
                     @forelse($quotations as $quo)
                     @php $sc = ['draft' => 'badge-gray', 'sent' => 'badge-blue', 'approved' => 'badge-green', 'rejected' => 'badge-red']; @endphp
                     <tr>
-                        <td data-label="Quotation"><span class="font-mono text-sm text-violet-600 dark:text-violet-400">{{ $quo->quotation_number }}</span></td>
+                        <td data-label="Quotation"><span class="font-mono text-sm text-stone-600 dark:text-stone-400">{{ $quo->quotation_number }}</span></td>
                         <td data-label="Klien" class="font-medium text-slate-900 dark:text-white">{{ $quo->client->company_name }}</td>
                         <td data-label="Tanggal" class="text-sm">{{ $quo->date->format('d M Y') }}</td>
                         <td data-label="Berlaku" class="text-sm {{ $quo->expiry_date->isPast() && $quo->status === 'sent' ? 'text-red-500' : '' }}">{{ $quo->expiry_date->format('d M Y') }}</td>

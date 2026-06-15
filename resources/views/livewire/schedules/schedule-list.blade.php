@@ -67,7 +67,7 @@
                     @endphp
                     <tr>
                         <td data-label="Klien">
-                            <a href="{{ route('clients.show', $schedule->client) }}" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400">
+                            <a href="{{ route('clients.show', $schedule->client) }}" class="font-medium text-slate-900 dark:text-white hover:text-stone-600 dark:hover:text-stone-400">
                                 {{ $schedule->client->company_name }}
                             </a>
                         </td>
@@ -77,7 +77,7 @@
                         <td data-label="Status"><span class="{{ $statusClasses[$schedule->status] ?? 'badge-gray' }}">{{ ucfirst(str_replace('_', ' ', $schedule->status)) }}</span></td>
                         <td data-label="Report">
                             @if($schedule->visitReport)
-                            <a href="{{ route('reports.show', $schedule->visitReport) }}" class="text-xs text-violet-600 dark:text-violet-400 hover:underline">
+                            <a href="{{ route('reports.show', $schedule->visitReport) }}" class="text-xs text-stone-600 dark:text-stone-400 hover:underline">
                                 {{ $schedule->visitReport->report_number }}
                             </a>
                             @elseif($schedule->status !== 'cancelled')
