@@ -80,26 +80,30 @@
             </div>
 
             {{-- Actions --}}
+            @php
+                $isOwner = auth()->user()->hasRole('admin') || (int) auth()->id() === (int) $schedule->technician_id;
+            @endphp
             <div class="card p-6 space-y-3">
                 <h3 class="font-semibold text-slate-900 dark:text-white">Actions</h3>
 
-                @if($schedule->status === 'scheduled' && (auth()->user()->hasRole('admin') || auth()->id() === $schedule->technician_id))
+                @if($schedule->status === 'scheduled' && $isOwner)
                 <button wire:click="$set('showCheckinModal', true)" class="btn-success w-full justify-center">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Check In
                 </button>
                 @endif
 
-                @if($schedule->status === 'in_progress' && (auth()->user()->hasRole('admin') || auth()->id() === $schedule->technician_id))
+                @if($schedule->status === 'in_progress' && $isOwner)
                 <button wire:click="$set('showCheckoutModal', true)" class="btn-primary w-full justify-center">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Check Out
                 </button>
-                @if(!$schedule->visitReport)
-                <a href="{{ route('reports.create', $schedule) }}" class="btn-secondary w-full justify-center">
-                    Create Visit Report
-                </a>
                 @endif
+
+                @if(!$schedule->visitReport && in_array($schedule->status, ['scheduled', 'in_progress']) && $isOwner)
+                <a href="{{ route('reports.create', $schedule) }}" class="btn-secondary w-full justify-center">
+                    Buat Visit Report
+                </a>
                 @endif
 
                 @if(in_array($schedule->status, ['scheduled', 'in_progress']) && auth()->user()->hasRole('admin'))
