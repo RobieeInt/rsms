@@ -65,6 +65,25 @@ class TechnicianScheduleNotification extends Notification
         return $mail->salutation('Terima kasih, Reconext Digital Kreasi');
     }
 
+    public static function waClientText(Schedule $schedule): string
+    {
+        Carbon::setLocale('id');
+
+        $date      = $schedule->visit_date->locale('id')->translatedFormat('l, d F Y');
+        $time      = $schedule->start_time . ($schedule->end_time ? ' s/d ' . $schedule->end_time : '');
+        $techName  = $schedule->technician->name ?? 'Teknisi';
+        $notes     = $schedule->notes ? "\n📝 *Catatan:* {$schedule->notes}" : '';
+
+        return "🛠️ *Pemberitahuan Kunjungan Teknisi*\n\n"
+            . "Yth. {$schedule->client->pic_name},\n\n"
+            . "Kami informasikan bahwa teknisi akan datang untuk kunjungan service dengan detail:\n\n"
+            . "👤 *Teknisi:* {$techName}\n"
+            . "📆 *Tanggal:* {$date}\n"
+            . "🕐 *Perkiraan Waktu:* {$time}"
+            . $notes . "\n\n"
+            . "Terima kasih.\n_Reconext Digital Kreasi_";
+    }
+
     public static function waText(Schedule $schedule, string $type = 'created'): string
     {
         Carbon::setLocale('id');
