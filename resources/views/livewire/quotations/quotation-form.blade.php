@@ -41,6 +41,7 @@
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-20 text-right">Qty</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-20 text-center">Unit</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-36 text-right">Unit Price</th>
+                            <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-28 text-right">Discount</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-36 text-right">Total</th>
                             <th class="w-10"></th>
                         </tr>
@@ -50,6 +51,7 @@
                         <tr class="border-b border-slate-100 dark:border-slate-700">
                             <td class="py-2 pr-3">
                                 <input wire:model.blur="items.{{ $i }}.description" type="text" class="form-input py-1.5" placeholder="Service or product description">
+                                <textarea wire:model.blur="items.{{ $i }}.detail" rows="2" class="form-input py-1.5 mt-1 text-xs" placeholder="Isi detail item (e.g. Setup Meta API, Chatbot, ...)"></textarea>
                                 @error("items.$i.description")<p class="text-xs text-red-500">{{ $message }}</p>@enderror
                             </td>
                             <td class="py-2 px-2">
@@ -60,6 +62,9 @@
                             </td>
                             <td class="py-2 px-2">
                                 <input wire:model.blur="items.{{ $i }}.unit_price" wire:change="updateItemTotal({{ $i }})" type="number" min="0" step="1000" class="form-input py-1.5 text-right">
+                            </td>
+                            <td class="py-2 px-2">
+                                <input wire:model.blur="items.{{ $i }}.discount_amount" wire:change="updateItemTotal({{ $i }})" type="number" min="0" step="1000" class="form-input py-1.5 text-right" placeholder="0">
                             </td>
                             <td class="py-2 px-2">
                                 <div class="text-right font-semibold text-slate-900 dark:text-white">

@@ -62,9 +62,11 @@ class InvoiceService
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'description' => $item->description,
+                    'detail' => $item->detail,
                     'quantity' => $item->quantity,
                     'unit' => $item->unit,
                     'unit_price' => $item->unit_price,
+                    'discount_amount' => $item->discount_amount,
                     'total_price' => $item->total_price,
                     'sort_order' => $item->sort_order,
                 ]);

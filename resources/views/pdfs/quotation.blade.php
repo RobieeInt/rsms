@@ -84,19 +84,26 @@ html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #1a
             <thead>
                 <tr>
                     <th style="width:5%;">#</th>
-                    <th style="width:43%;">Deskripsi</th>
-                    <th class="r" style="width:10%;">Qty</th>
-                    <th class="r" style="width:20%;">Harga Satuan</th>
-                    <th class="r" style="width:22%;">Total</th>
+                    <th style="width:38%;">Deskripsi</th>
+                    <th class="r" style="width:9%;">Qty</th>
+                    <th class="r" style="width:18%;">Harga Satuan</th>
+                    <th class="r" style="width:14%;">Diskon</th>
+                    <th class="r" style="width:16%;">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($quotation->items as $i => $item)
                 <tr>
                     <td class="c">{{ $i + 1 }}</td>
-                    <td>{{ $item->description }}</td>
+                    <td>
+                        <div>{{ $item->description }}</div>
+                        @if($item->detail)
+                        <div style="font-size:9px; color:#888; margin-top:3px; line-height:1.5;">{{ $item->detail }}</div>
+                        @endif
+                    </td>
                     <td class="r">{{ number_format($item->quantity, 0, ',', '.') }}{{ $item->unit ? ' '.$item->unit : '' }}</td>
                     <td class="r">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                    <td class="r">{{ $item->discount_amount > 0 ? number_format($item->discount_amount, 0, ',', '.') : '-' }}</td>
                     <td class="r" style="font-weight:600;">{{ number_format($item->total_price, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach

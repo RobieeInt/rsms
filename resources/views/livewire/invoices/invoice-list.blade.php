@@ -93,6 +93,9 @@
                                 </a>
                                 @endif
                                 @endif
+                                @if(in_array($invoice->status, ['sent', 'overdue']))
+                                <button wire:click="markAsPaid({{ $invoice->id }})" class="btn-success py-1 px-2.5 text-xs">Lunas</button>
+                                @endif
                                 <button wire:click="confirmDelete({{ $invoice->id }})" class="btn-danger py-1 px-2.5 text-xs">Hapus</button>
                             </div>
                         </td>
@@ -109,6 +112,50 @@
         <div class="p-4 border-t border-slate-200 dark:border-slate-700">{{ $invoices->links() }}</div>
         @endif
     </div>
+
+    {{-- Payment Modal --}}
+    @if($showPaymentModal)
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="card p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Tandai Lunas</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Isi data pembayaran untuk invoice ini.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Tanggal Bayar <span class="text-red-500">*</span></label>
+                    <input wire:model="payment_date" type="date" class="form-input">
+                    @error('payment_date')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="form-label">Metode Pembayaran <span class="text-red-500">*</span></label>
+                    <select wire:model="payment_method" class="form-select">
+                        <option value="">— Pilih —</option>
+                        <option value="transfer">Transfer Bank</option>
+                        <option value="cash">Cash</option>
+                        <option value="qris">QRIS</option>
+                        <option value="other">Lainnya</option>
+                    </select>
+                    @error('payment_method')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="form-label">Catatan</label>
+                    <textarea wire:model="payment_notes" rows="2" class="form-input" placeholder="Opsional"></textarea>
+                </div>
+                <div>
+                    <label class="form-label">Bukti Pembayaran</label>
+                    <input wire:model="payment_proof" type="file" accept="image/*,.pdf" class="form-input">
+                    @error('payment_proof')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button wire:click="$set('showPaymentModal', false)" class="btn-secondary">Batal</button>
+                <button wire:click="submitPayment" wire:loading.attr="disabled" class="btn-success">
+                    <span wire:loading.remove wire:target="submitPayment">Simpan</span>
+                    <span wire:loading wire:target="submitPayment">Menyimpan...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 
     @if($deleteId)
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

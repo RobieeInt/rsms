@@ -38,9 +38,11 @@ class QuotationForm extends Component
             $this->notes = $quotation->notes ?? '';
             $this->items = $quotation->items->map(fn($item) => [
                 'description' => $item->description,
+                'detail' => $item->detail,
                 'quantity' => (float) $item->quantity,
                 'unit' => $item->unit,
                 'unit_price' => (float) $item->unit_price,
+                'discount_amount' => (float) $item->discount_amount,
                 'total_price' => (float) $item->total_price,
             ])->toArray();
         }
@@ -54,7 +56,7 @@ class QuotationForm extends Component
 
     public function addItem(): void
     {
-        $this->items[] = ['description' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'total_price' => 0];
+        $this->items[] = ['description' => '', 'detail' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'discount_amount' => 0, 'total_price' => 0];
     }
 
     public function removeItem(int $index): void
@@ -70,14 +72,14 @@ class QuotationForm extends Component
     public function updateItemTotal(int $index): void
     {
         $item = $this->items[$index];
-        $this->items[$index]['total_price'] = round((float)$item['quantity'] * (float)$item['unit_price'], 2);
+        $this->items[$index]['total_price'] = round((float)$item['quantity'] * (float)$item['unit_price'] - (float)$item['discount_amount'], 2);
         $this->recalculate();
     }
 
     private function recalculate(): void
     {
         foreach ($this->items as $i => $item) {
-            $this->items[$i]['total_price'] = round((float)$item['quantity'] * (float)$item['unit_price'], 2);
+            $this->items[$i]['total_price'] = round((float)$item['quantity'] * (float)$item['unit_price'] - (float)$item['discount_amount'], 2);
         }
         $this->subtotal = round(collect($this->items)->sum('total_price'), 2);
         $this->tax_amount = round($this->subtotal * ($this->tax_percent / 100), 2);
@@ -94,6 +96,7 @@ class QuotationForm extends Component
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount_amount' => 'nullable|numeric|min:0',
         ]);
 
         $this->recalculate();

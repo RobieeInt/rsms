@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceItem extends Model
 {
     protected $fillable = [
-        'invoice_id', 'description', 'quantity', 'unit', 'unit_price', 'total_price', 'sort_order',
+        'invoice_id', 'description', 'detail', 'quantity', 'unit', 'unit_price', 'discount_amount', 'total_price', 'sort_order',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'total_price' => 'decimal:2',
     ];
 

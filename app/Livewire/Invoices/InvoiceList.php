@@ -7,11 +7,12 @@ use App\Models\Invoice;
 use App\Notifications\InvoiceGeneratedNotification;
 use App\Services\InvoiceService;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class InvoiceList extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public string $search = '';
     public string $statusFilter = '';
@@ -21,6 +22,13 @@ class InvoiceList extends Component
 
     public bool $showRetainerModal = false;
     public int $retainerClientId = 0;
+
+    public bool $showPaymentModal = false;
+    public ?int $paymentInvoiceId = null;
+    public string $payment_date = '';
+    public string $payment_method = '';
+    public string $payment_notes = '';
+    public $payment_proof = null;
 
     public function updatingSearch(): void { $this->resetPage(); }
 
@@ -66,6 +74,42 @@ class InvoiceList extends Component
     }
 
     public function confirmDelete(int $id): void { $this->deleteId = $id; }
+
+    public function markAsPaid(int $id): void
+    {
+        $this->paymentInvoiceId = $id;
+        $this->payment_date = now()->format('Y-m-d');
+        $this->payment_method = '';
+        $this->payment_notes = '';
+        $this->payment_proof = null;
+        $this->showPaymentModal = true;
+    }
+
+    public function submitPayment(InvoiceService $invoiceService): void
+    {
+        $this->validate([
+            'payment_date' => 'required|date',
+            'payment_method' => 'required|string',
+            'payment_proof' => 'nullable|file|max:5120',
+        ]);
+
+        $invoice = Invoice::findOrFail($this->paymentInvoiceId);
+
+        $data = [
+            'payment_date' => $this->payment_date,
+            'payment_method' => $this->payment_method,
+            'payment_notes' => $this->payment_notes,
+        ];
+
+        if ($this->payment_proof) {
+            $data['payment_proof'] = $this->payment_proof->store('payment-proofs', 'public');
+        }
+
+        $invoiceService->markAsPaid($invoice, $data);
+        $this->showPaymentModal = false;
+        $this->paymentInvoiceId = null;
+        $this->dispatch('notify', message: 'Invoice ' . $invoice->invoice_number . ' marked as paid.', type: 'success');
+    }
 
     public function deleteInvoice(): void
     {
