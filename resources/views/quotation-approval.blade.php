@@ -8,7 +8,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.5; }
-        .container { max-width: 680px; margin: 40px auto; padding: 0 16px; }
+        .container { max-width: 860px; margin: 40px auto; padding: 0 16px; }
         .header { text-align: center; margin-bottom: 32px; }
         .logo { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
         .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
@@ -20,7 +20,7 @@
         th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         th.right { text-align: right; }
         td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
-        td.right { text-align: right; font-weight: 600; }
+        td.right { text-align: right; font-weight: 600; white-space: nowrap; }
         .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #64748b; }
         .total-final { display: flex; justify-content: space-between; padding: 10px 0; font-size: 18px; font-weight: 700; color: #1a1a1a; border-top: 2px solid #e2e8f0; margin-top: 4px; }
         .form-group { margin-bottom: 16px; }
@@ -81,15 +81,21 @@
 
             <table>
                 <thead><tr>
-                    <th>#</th><th>Description</th><th class="right">Qty</th><th class="right">Unit Price</th><th class="right">Total</th>
+                    <th>#</th><th>Description</th><th class="right">Qty</th><th class="right">Unit Price</th><th class="right">Discount</th><th class="right">Total</th>
                 </tr></thead>
                 <tbody>
                     @foreach($quotation->items as $i => $item)
                     <tr>
                         <td style="color: #94a3b8;">{{ $i + 1 }}</td>
-                        <td>{{ $item->description }}</td>
+                        <td>
+                            <div>{{ $item->description }}</div>
+                            @if($item->detail)
+                            <div style="font-size: 12px; color: #94a3b8; margin-top: 3px; line-height: 1.5;">{{ $item->detail }}</div>
+                            @endif
+                        </td>
                         <td class="right">{{ $item->quantity }} {{ $item->unit }}</td>
                         <td class="right">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                        <td class="right">{{ $item->discount_amount > 0 ? 'Rp '.number_format($item->discount_amount, 0, ',', '.') : '-' }}</td>
                         <td class="right">Rp {{ number_format($item->total_price, 0, ',', '.') }}</td>
                     </tr>
                     @endforeach
