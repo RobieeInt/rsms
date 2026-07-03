@@ -98,7 +98,7 @@ html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #1a
                     <td>
                         <div>{{ $item->description }}</div>
                         @if($item->detail)
-                        <div style="font-size:9px; color:#888; margin-top:3px; line-height:1.5;">{{ $item->detail }}</div>
+                        <div style="font-size:9px; color:#888; margin-top:3px; line-height:1.5;">{!! nl2br(e($item->detail)) !!}</div>
                         @endif
                     </td>
                     <td class="r">{{ number_format($item->quantity, 0, ',', '.') }}{{ $item->unit ? ' '.$item->unit : '' }}</td>
@@ -135,7 +135,7 @@ html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #1a
     @if($quotation->notes)
     <div style="margin:14px 26px; padding:10px 12px; background:rgba(0,0,0,0.05); border-radius:6px; font-size:10px; color:#444; line-height:1.65;">
         <div style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:5px;">Catatan</div>
-        {{ $quotation->notes }}
+        {!! nl2br(e($quotation->notes)) !!}
     </div>
     @endif
 

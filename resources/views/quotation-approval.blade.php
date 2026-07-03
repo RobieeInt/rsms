@@ -90,7 +90,7 @@
                         <td>
                             <div>{{ $item->description }}</div>
                             @if($item->detail)
-                            <div style="font-size: 12px; color: #94a3b8; margin-top: 3px; line-height: 1.5;">{{ $item->detail }}</div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-top: 3px; line-height: 1.5;">{!! nl2br(e($item->detail)) !!}</div>
                             @endif
                         </td>
                         <td class="right">{{ $item->quantity }} {{ $item->unit }}</td>
@@ -114,7 +114,7 @@
 
             @if($quotation->notes)
             <div style="margin-top: 20px; padding: 14px; background: #f8fafc; border-radius: 8px; font-size: 13px; color: #475569;">
-                <strong>Notes:</strong> {{ $quotation->notes }}
+                <strong>Notes:</strong><br>{!! nl2br(e($quotation->notes)) !!}
             </div>
             @endif
 
