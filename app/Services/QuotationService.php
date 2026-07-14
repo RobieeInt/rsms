@@ -33,10 +33,13 @@ class QuotationService
             foreach ($items as $index => $item) {
                 QuotationItem::create([
                     'quotation_id' => $quotation->id,
+                    'finding_id' => $item['finding_id'] ?? null,
                     'description' => $item['description'],
+                    'detail' => $item['detail'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit' => $item['unit'] ?? 'unit',
                     'unit_price' => $item['unit_price'],
+                    'discount_amount' => $item['discount_amount'] ?? 0,
                     'total_price' => $item['total_price'],
                     'sort_order' => $index,
                 ]);

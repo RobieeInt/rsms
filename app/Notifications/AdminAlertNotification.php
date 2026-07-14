@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\FcmChannel;
 use Illuminate\Notifications\Notification;
 
 class AdminAlertNotification extends Notification
@@ -15,7 +16,7 @@ class AdminAlertNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', FcmChannel::class];
     }
 
     public function toArray(object $notifiable): array
@@ -26,5 +27,27 @@ class AdminAlertNotification extends Notification
             'message' => $this->message,
             'url'     => $this->url,
         ];
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->message,
+            'data' => array_filter(['route' => $this->appRoute()]),
+        ];
+    }
+
+    /**
+     * $url is built with the web route() helper (e.g. https://app.test/schedules/5);
+     * the mobile app's notification tap handler only needs the path part.
+     */
+    private function appRoute(): ?string
+    {
+        if (! $this->url) {
+            return null;
+        }
+
+        return '/'.ltrim(parse_url($this->url, PHP_URL_PATH) ?? '', '/');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Invoice;
 use App\Notifications\InvoiceReminderNotification;
 use Illuminate\Console\Command;
+use Throwable;
 
 class SendPaymentReminders extends Command
 {
@@ -36,9 +37,13 @@ class SendPaymentReminders extends Command
                 ->whereHas('client', fn($q) => $q->whereNotNull('pic_email'))
                 ->each(function (Invoice $invoice) use ($type) {
                     $email = $invoice->client->pic_email;
-                    $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, $type));
-                    $invoice->logSend($type, $email);
-                    $this->line("  [{$type}] {$invoice->invoice_number} → {$email}");
+                    try {
+                        $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, $type));
+                        $invoice->logSend($type, $email);
+                        $this->line("  [{$type}] {$invoice->invoice_number} → {$email}");
+                    } catch (Throwable $e) {
+                        $this->error("  [{$type}] {$invoice->invoice_number} → {$email} FAILED: ".$e->getMessage());
+                    }
                 });
         }
 
@@ -49,9 +54,13 @@ class SendPaymentReminders extends Command
             ->whereHas('client', fn($q) => $q->whereNotNull('pic_email'))
             ->each(function (Invoice $invoice) {
                 $email = $invoice->client->pic_email;
-                $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, 'overdue_7days'));
-                $invoice->logSend('overdue_7days', $email);
-                $this->line("  [overdue_7days] {$invoice->invoice_number} → {$email}");
+                try {
+                    $invoice->client->notifyNow(new InvoiceReminderNotification($invoice, 'overdue_7days'));
+                    $invoice->logSend('overdue_7days', $email);
+                    $this->line("  [overdue_7days] {$invoice->invoice_number} → {$email}");
+                } catch (Throwable $e) {
+                    $this->error("  [overdue_7days] {$invoice->invoice_number} → {$email} FAILED: ".$e->getMessage());
+                }
             });
 
         $this->info('Done.');

@@ -1,0 +1,1256 @@
+{
+	"info": {
+		"name": "RSMS - Reconext Service Management System",
+		"description": "API Collection untuk RSMS (Reconext Service Management System)\n\n## Cara Pakai\n1. Login terlebih dahulu di endpoint **Auth > Login**\n2. Copy token dari response\n3. Klik folder collection \"RSMS API\" di Postman\n4. Buka tab **Authorization** → pilih **Bearer Token** → paste token\n5. Semua request di dalam collection akan otomatis pakai token tersebut",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin@reconext.com\",\n\t\"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Login dan dapatkan token. Token disimpan di variable `token` untuk semua request lainnya."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set('token', jsonData.token);",
+									"    console.log('Token saved: ' + jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": ["{{base_url}}"],
+							"path": ["logout"]
+						},
+						"description": "Logout dan hapus token."
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/user",
+							"host": ["{{base_url}}"],
+							"path": ["user"]
+						},
+						"description": "Ambil data user yang sedang login."
+					}
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						},
+						"description": "Ambil data profil user."
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Admin RSMS\",\n\t\"email\": \"admin@reconext.com\",\n\t\"phone\": \"081234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						},
+						"description": "Update data profil user. Field: name, email, phone, avatar (file)."
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"current_password\": \"password\",\n\t\"new_password\": \"newpassword123\",\n\t\"new_password_confirmation\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/password",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "password"]
+						},
+						"description": "Ganti password."
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard"]
+						},
+						"description": "Ambil statistik dashboard: total client, aset, jadwal mendatang, temuan, penawaran, invoice, pendapatan bulanan/tahunan, data chart."
+					}
+				}
+			]
+		},
+		{
+			"name": "Clients",
+			"item": [
+				{
+					"name": "List Clients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clients?search=&status=&health=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["clients"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by company_name, pic_name, pic_email" },
+								{ "key": "status", "value": "", "description": "Filter: 1 (active) or 0 (inactive)" },
+								{ "key": "health", "value": "", "description": "Filter: healthy, warning, critical" },
+								{ "key": "per_page", "value": "15", "description": "Items per page" }
+							]
+						},
+						"description": "List semua client dengan search dan filter."
+					}
+				},
+				{
+					"name": "Create Client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"company_name\": \"PT Maju Jaya\",\n\t\"pic_name\": \"Budi Santoso\",\n\t\"pic_email\": \"budi@majujaya.com\",\n\t\"pic_phone\": \"081234567890\",\n\t\"address\": \"Jl. Sudirman No. 123, Jakarta\",\n\t\"monthly_retainer_fee\": 5000000,\n\t\"invoice_due_date\": 15,\n\t\"is_active\": true,\n\t\"notes\": \"Client regular\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clients",
+							"host": ["{{base_url}}"],
+							"path": ["clients"]
+						},
+						"description": "Buat client baru."
+					}
+				},
+				{
+					"name": "Get Client Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clients/1",
+							"host": ["{{base_url}}"],
+							"path": ["clients", "1"]
+						},
+						"description": "Ambil detail client berdasarkan ID."
+					}
+				},
+				{
+					"name": "Update Client",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"company_name\": \"PT Maju Jaya Updated\",\n\t\"pic_name\": \"Budi Santoso\",\n\t\"pic_email\": \"budi@majujaya.com\",\n\t\"monthly_retainer_fee\": 6000000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clients/1",
+							"host": ["{{base_url}}"],
+							"path": ["clients", "1"]
+						},
+						"description": "Update data client."
+					}
+				},
+				{
+					"name": "Delete Client",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clients/1",
+							"host": ["{{base_url}}"],
+							"path": ["clients", "1"]
+						},
+						"description": "Hapus client (soft delete)."
+					}
+				},
+				{
+					"name": "Generate Retainer Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/clients/1/generate-retainer",
+							"host": ["{{base_url}}"],
+							"path": ["clients", "1", "generate-retainer"]
+						},
+						"description": "Generate invoice retainer bulanan untuk client."
+					}
+				}
+			]
+		},
+		{
+			"name": "Technicians",
+			"item": [
+				{
+					"name": "List Technicians",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/technicians?search=&status=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["technicians"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by name, email" },
+								{ "key": "status", "value": "", "description": "Filter: 1 or 0" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua teknisi."
+					}
+				},
+				{
+					"name": "Create Technician",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Teknisi Baru\",\n\t\"email\": \"teknisi@reconext.com\",\n\t\"password\": \"password\",\n\t\"password_confirmation\": \"password\",\n\t\"phone\": \"081234567891\",\n\t\"position\": \"Field Technician\",\n\t\"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/technicians",
+							"host": ["{{base_url}}"],
+							"path": ["technicians"]
+						},
+						"description": "Buat teknisi baru. Otomatis assign role 'technician'."
+					}
+				},
+				{
+					"name": "Get Technician Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/technicians/1",
+							"host": ["{{base_url}}"],
+							"path": ["technicians", "1"]
+						},
+						"description": "Ambil detail teknisi."
+					}
+				},
+				{
+					"name": "Update Technician",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Teknisi Updated\",\n\t\"email\": \"teknisi@reconext.com\",\n\t\"phone\": \"081234567892\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/technicians/1",
+							"host": ["{{base_url}}"],
+							"path": ["technicians", "1"]
+						},
+						"description": "Update data teknisi. Password optional saat update."
+					}
+				},
+				{
+					"name": "Delete Technician",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/technicians/1",
+							"host": ["{{base_url}}"],
+							"path": ["technicians", "1"]
+						},
+						"description": "Hapus teknisi."
+					}
+				}
+			]
+		},
+		{
+			"name": "Assets",
+			"item": [
+				{
+					"name": "List Assets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/assets?search=&client_id=&asset_type=&health=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["assets"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by asset_name, asset_code, brand" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "asset_type", "value": "", "description": "Filter: desktop_pc, laptop, printer, router, switch, access_point, cctv, nas, server, other" },
+								{ "key": "health", "value": "", "description": "Filter: good, fair, poor, critical" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua aset dengan search dan filter."
+					}
+				},
+				{
+					"name": "Create Asset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1,\n\t\"asset_name\": \"Desktop PC Admin\",\n\t\"asset_type\": \"desktop_pc\",\n\t\"brand\": \"Lenovo\",\n\t\"model\": \"ThinkCentre M920\",\n\t\"serial_number\": \"SN12345678\",\n\t\"cpu\": \"Intel Core i5-8500\",\n\t\"ram\": \"8GB DDR4\",\n\t\"storage\": \"256GB SSD\",\n\t\"operating_system\": \"Windows 11\",\n\t\"location\": \"Ruang Server\",\n\t\"purchase_year\": 2023,\n\t\"health_status\": \"good\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/assets",
+							"host": ["{{base_url}}"],
+							"path": ["assets"]
+						},
+						"description": "Buat aset baru. Asset code otomatis (AST-XXXXX)."
+					}
+				},
+				{
+					"name": "Get Asset Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/assets/1",
+							"host": ["{{base_url}}"],
+							"path": ["assets", "1"]
+						},
+						"description": "Ambil detail aset beserta checklists dan findings."
+					}
+				},
+				{
+					"name": "Update Asset",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"asset_name\": \"Desktop PC Admin Updated\",\n\t\"health_status\": \"fair\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/assets/1",
+							"host": ["{{base_url}}"],
+							"path": ["assets", "1"]
+						},
+						"description": "Update data aset."
+					}
+				},
+				{
+					"name": "Delete Asset",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/assets/1",
+							"host": ["{{base_url}}"],
+							"path": ["assets", "1"]
+						},
+						"description": "Hapus aset (soft delete)."
+					}
+				}
+			]
+		},
+		{
+			"name": "Schedules",
+			"item": [
+				{
+					"name": "List Schedules",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/schedules?search=&status=&client_id=&technician_id=&date_from=&date_to=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["schedules"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by client company_name" },
+								{ "key": "status", "value": "", "description": "Filter: scheduled, in_progress, completed, cancelled" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "technician_id", "value": "", "description": "Filter by technician ID" },
+								{ "key": "date_from", "value": "", "description": "Filter from date (YYYY-MM-DD)" },
+								{ "key": "date_to", "value": "", "description": "Filter to date (YYYY-MM-DD)" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua jadwal. Teknisi hanya melihat jadwal sendiri."
+					}
+				},
+				{
+					"name": "Create Schedule",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1,\n\t\"technician_id\": 2,\n\t\"visit_date\": \"2026-07-15\",\n\t\"start_time\": \"09:00\",\n\t\"end_time\": \"12:00\",\n\t\"notes\": \"Maintenance rutin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/schedules",
+							"host": ["{{base_url}}"],
+							"path": ["schedules"]
+						},
+						"description": "Buat jadwal baru. Otomatis kirim notifikasi ke teknisi dan client."
+					}
+				},
+				{
+					"name": "Get Schedule Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/schedules/1",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1"]
+						},
+						"description": "Ambil detail jadwal."
+					}
+				},
+				{
+					"name": "Update Schedule",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"visit_date\": \"2026-07-16\",\n\t\"start_time\": \"10:00\",\n\t\"notes\": \"Dijadwal ulang\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/schedules/1",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1"]
+						},
+						"description": "Update jadwal."
+					}
+				},
+				{
+					"name": "Delete Schedule",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/schedules/1",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1"]
+						},
+						"description": "Hapus jadwal."
+					}
+				},
+				{
+					"name": "Check-In",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"lat\": -6.2088,\n\t\"lng\": 106.8456\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/schedules/1/checkin",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1", "checkin"]
+						},
+						"description": "Check-in ke lokasi. Kirim GPS coords. Bisa tambah photo (multipart/form-data). Status berubah ke 'in_progress'."
+					}
+				},
+				{
+					"name": "Check-Out",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"lat\": -6.2089,\n\t\"lng\": 106.8457\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/schedules/1/checkout",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1", "checkout"]
+						},
+						"description": "Check-out dari lokasi. Status berubah ke 'completed'."
+					}
+				},
+				{
+					"name": "Cancel Schedule",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/schedules/1/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["schedules", "1", "cancel"]
+						},
+						"description": "Batalkan jadwal."
+					}
+				}
+			]
+		},
+		{
+			"name": "Visit Reports",
+			"item": [
+				{
+					"name": "List Reports",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports?search=&status=&client_id=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["reports"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by report_number or client company_name" },
+								{ "key": "status", "value": "", "description": "Filter: draft, completed, signed" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua laporan kunjungan."
+					}
+				},
+				{
+					"name": "Create Report",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"schedule_id\": 1,\n\t\"summary\": \"Kunjungan maintenance rutin. Semua aset dalam kondisi baik.\",\n\t\"overall_notes\": \"Client puas dengan layanan.\",\n\t\"status\": \"completed\",\n\t\"asset_checklists\": [\n\t\t{\n\t\t\t\"asset_id\": 1,\n\t\t\t\"template_id\": 1,\n\t\t\t\"results\": {\n\t\t\t\t\"storage_check\": \"ok\",\n\t\t\t\t\"ram_check\": \"ok\"\n\t\t\t}\n\t\t}\n\t],\n\t\"network_checklist\": {\n\t\t\"internet_connectivity\": \"ok\",\n\t\t\"speed_test\": \"ok\",\n\t\t\"download_speed\": \"50 Mbps\",\n\t\t\"upload_speed\": \"25 Mbps\",\n\t\t\"router_check\": \"ok\",\n\t\t\"lan_cable_check\": \"ok\",\n\t\t\"ip_conflict_check\": \"ok\"\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reports",
+							"host": ["{{base_url}}"],
+							"path": ["reports"]
+						},
+						"description": "Buat laporan kunjungan baru. Bisa kirim photos via multipart/form-data."
+					}
+				},
+				{
+					"name": "Get Report Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports/1",
+							"host": ["{{base_url}}"],
+							"path": ["reports", "1"]
+						},
+						"description": "Ambil detail laporan beserta checklists, photos, dan findings."
+					}
+				},
+				{
+					"name": "Update Report",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"summary\": \"Updated summary\",\n\t\"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reports/1",
+							"host": ["{{base_url}}"],
+							"path": ["reports", "1"]
+						},
+						"description": "Update laporan kunjungan."
+					}
+				},
+				{
+					"name": "Delete Report",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports/1",
+							"host": ["{{base_url}}"],
+							"path": ["reports", "1"]
+						},
+						"description": "Hapus laporan."
+					}
+				},
+				{
+					"name": "Send Report Email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports/1/send-email",
+							"host": ["{{base_url}}"],
+							"path": ["reports", "1", "send-email"]
+						},
+						"description": "Kirim laporan ke email PIC client."
+					}
+				}
+			]
+		},
+		{
+			"name": "Findings",
+			"item": [
+				{
+					"name": "List Findings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/findings?search=&severity=&status=&client_id=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["findings"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by title" },
+								{ "key": "severity", "value": "", "description": "Filter: low, medium, high, critical" },
+								{ "key": "status", "value": "", "description": "Filter: open, monitoring, resolved" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua temuan. Diurutkan berdasarkan severity (critical > high > medium > low)."
+					}
+				},
+				{
+					"name": "Create Finding",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1,\n\t\"asset_id\": 1,\n\t\"title\": \"PC sering restart sendiri\",\n\t\"description\": \"PC client mengalami restart mendadak saat digunakan untuk pekerjaan berat.\",\n\t\"category\": \"Hardware\",\n\t\"severity\": \"high\",\n\t\"status\": \"open\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/findings",
+							"host": ["{{base_url}}"],
+							"path": ["findings"]
+						},
+						"description": "Buat temuan baru. Health score client otomatis di-recalculate."
+					}
+				},
+				{
+					"name": "Get Finding Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/findings/1",
+							"host": ["{{base_url}}"],
+							"path": ["findings", "1"]
+						},
+						"description": "Ambil detail temuan beserta rekomendasi."
+					}
+				},
+				{
+					"name": "Update Finding",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"PC sering restart sendiri - Updated\",\n\t\"status\": \"monitoring\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/findings/1",
+							"host": ["{{base_url}}"],
+							"path": ["findings", "1"]
+						},
+						"description": "Update temuan."
+					}
+				},
+				{
+					"name": "Delete Finding",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/findings/1",
+							"host": ["{{base_url}}"],
+							"path": ["findings", "1"]
+						},
+						"description": "Hapus temuan."
+					}
+				},
+				{
+					"name": "Add Recommendation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"recommendation\": \"Ganti power supply dengan yang lebih besar (500W)\",\n\t\"priority\": \"high\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/findings/1/recommendations",
+							"host": ["{{base_url}}"],
+							"path": ["findings", "1", "recommendations"]
+						},
+						"description": "Tambah rekomendasi ke temuan."
+					}
+				},
+				{
+					"name": "Update Finding Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"status\": \"resolved\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/findings/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["findings", "1", "status"]
+						},
+						"description": "Update status temuan. Jika resolved, health score client di-recalculate."
+					}
+				}
+			]
+		},
+		{
+			"name": "Quotations",
+			"item": [
+				{
+					"name": "List Quotations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/quotations?search=&status=&client_id=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["quotations"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by quotation_number or client company_name" },
+								{ "key": "status", "value": "", "description": "Filter: draft, sent, approved, rejected" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua penawaran."
+					}
+				},
+				{
+					"name": "Create Quotation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1,\n\t\"date\": \"2026-07-13\",\n\t\"expiry_date\": \"2026-08-13\",\n\t\"tax_percent\": 11,\n\t\"discount_amount\": 0,\n\t\"notes\": \"Penawaran perbaikan hardware\",\n\t\"items\": [\n\t\t{\n\t\t\t\"description\": \"Penggantian Power Supply 500W\",\n\t\t\t\"detail\": \"PSU Corsair CX550\",\n\t\t\t\"quantity\": 1,\n\t\t\t\"unit\": \"unit\",\n\t\t\t\"unit_price\": 850000\n\t\t},\n\t\t{\n\t\t\t\"description\": \"Jasa Pemasangan\",\n\t\t\t\"quantity\": 1,\n\t\t\t\"unit\": \"service\",\n\t\t\t\"unit_price\": 200000\n\t\t}\n\t]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/quotations",
+							"host": ["{{base_url}}"],
+							"path": ["quotations"]
+						},
+						"description": "Buat penawaran baru dengan line items."
+					}
+				},
+				{
+					"name": "Get Quotation Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/quotations/1",
+							"host": ["{{base_url}}"],
+							"path": ["quotations", "1"]
+						},
+						"description": "Ambil detail penawaran beserta items dan invoice (jika ada)."
+					}
+				},
+				{
+					"name": "Update Quotation",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"notes\": \"Updated notes\",\n\t\"items\": [\n\t\t{\n\t\t\t\"description\": \"Penggantian Power Supply 500W\",\n\t\t\t\"quantity\": 1,\n\t\t\t\"unit\": \"unit\",\n\t\t\t\"unit_price\": 900000\n\t\t}\n\t]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/quotations/1",
+							"host": ["{{base_url}}"],
+							"path": ["quotations", "1"]
+						},
+						"description": "Update penawaran."
+					}
+				},
+				{
+					"name": "Delete Quotation",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/quotations/1",
+							"host": ["{{base_url}}"],
+							"path": ["quotations", "1"]
+						},
+						"description": "Hapus penawaran."
+					}
+				},
+				{
+					"name": "Send Quotation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/quotations/1/send",
+							"host": ["{{base_url}}"],
+							"path": ["quotations", "1", "send"]
+						},
+						"description": "Kirim penawaran ke client via email. Status berubah ke 'sent'."
+					}
+				},
+				{
+					"name": "Convert to Invoice",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/quotations/1/convert-to-invoice",
+							"host": ["{{base_url}}"],
+							"path": ["quotations", "1", "convert-to-invoice"]
+						},
+						"description": "Konversi penawaran yang sudah approved menjadi invoice."
+					}
+				}
+			]
+		},
+		{
+			"name": "Quotation Approval (Public)",
+			"item": [
+				{
+					"name": "Approve/Reject Quotation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"action\": \"approved\",\n\t\"approved_by_name\": \"Budi Santoso\",\n\t\"approval_notes\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/quotation/approve/{token}",
+							"host": ["{{base_url}}"],
+							"path": ["quotation", "approve", "{token}"],
+							"variable": [
+								{
+									"key": "token",
+									"value": "YOUR_APPROVAL_TOKEN",
+									"description": "Token dari response quotation (approval_token)"
+								}
+							]
+						},
+						"description": "Approve atau reject penawaran (public, tidak perlu login). Ganti action ke 'rejected' untuk menolak."
+					}
+				}
+			]
+		},
+		{
+			"name": "Invoices",
+			"item": [
+				{
+					"name": "List Invoices",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices?search=&status=&client_id=&type=&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["invoices"],
+							"query": [
+								{ "key": "search", "value": "", "description": "Search by invoice_number or client company_name" },
+								{ "key": "status", "value": "", "description": "Filter: draft, sent, paid, overdue, cancelled" },
+								{ "key": "client_id", "value": "", "description": "Filter by client ID" },
+								{ "key": "type", "value": "", "description": "Filter: retainer, quotation, manual" },
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua invoice. Response termasuk total_unpaid."
+					}
+				},
+				{
+					"name": "Create Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1,\n\t\"type\": \"manual\",\n\t\"invoice_date\": \"2026-07-13\",\n\t\"due_date\": \"2026-07-28\",\n\t\"tax_percent\": 11,\n\t\"discount_amount\": 0,\n\t\"notes\": \"Invoice manual\",\n\t\"items\": [\n\t\t{\n\t\t\t\"description\": \"Service Fee Juli 2026\",\n\t\t\t\"quantity\": 1,\n\t\t\t\"unit\": \"month\",\n\t\t\t\"unit_price\": 5000000\n\t\t}\n\t]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices",
+							"host": ["{{base_url}}"],
+							"path": ["invoices"]
+						},
+						"description": "Buat invoice baru."
+					}
+				},
+				{
+					"name": "Get Invoice Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/1",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1"]
+						},
+						"description": "Ambil detail invoice beserta items dan send logs."
+					}
+				},
+				{
+					"name": "Update Invoice",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"notes\": \"Updated notes\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices/1",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1"]
+						},
+						"description": "Update invoice."
+					}
+				},
+				{
+					"name": "Delete Invoice",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/1",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1"]
+						},
+						"description": "Hapus invoice."
+					}
+				},
+				{
+					"name": "Send Invoice",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/1/send",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1", "send"]
+						},
+						"description": "Kirim invoice ke client via email. Status berubah ke 'sent'."
+					}
+				},
+				{
+					"name": "Resend Invoice Email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/invoices/1/resend-email",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1", "resend-email"]
+						},
+						"description": "Kirim ulang email invoice."
+					}
+				},
+				{
+					"name": "Mark as Paid",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"payment_date\": \"2026-07-13\",\n\t\"payment_method\": \"Transfer Bank BCA\",\n\t\"payment_notes\": \"Lunas\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices/1/mark-as-paid",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "1", "mark-as-paid"]
+						},
+						"description": "Tandai invoice sebagai lunas. Bisa upload payment_proof via multipart/form-data."
+					}
+				},
+				{
+					"name": "Generate Retainer Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/invoices/generate-retainer",
+							"host": ["{{base_url}}"],
+							"path": ["invoices", "generate-retainer"]
+						},
+						"description": "Generate invoice retainer bulanan untuk client."
+					}
+				}
+			]
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "Get Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "Ambil pengaturan perusahaan."
+					}
+				},
+				{
+					"name": "Update Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"company_name\": \"Reconext Digital Kreasi\",\n\t\"email\": \"info@reconext.com\",\n\t\"phone\": \"021-1234567\",\n\t\"address\": \"Jl. Teknologi No. 1, Jakarta\",\n\t\"bank_name\": \"Bank BCA\",\n\t\"bank_account_number\": \"1234567890\",\n\t\"bank_account_holder\": \"PT Reconext Digital Kreasi\",\n\t\"website\": \"https://reconext.com\",\n\t\"tax_number\": \"1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "Update pengaturan perusahaan. Bisa upload logo via multipart/form-data."
+					}
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "List Notifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications?unread_only=false&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["notifications"],
+							"query": [
+								{ "key": "unread_only", "value": "false", "description": "Filter only unread notifications" },
+								{ "key": "per_page", "value": "20" }
+							]
+						},
+						"description": "List notifikasi user."
+					}
+				},
+				{
+					"name": "Mark Notification as Read",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications/{notification_id}/read",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", "{notification_id}", "read"],
+							"variable": [
+								{
+									"key": "notification_id",
+									"value": "YOUR_NOTIFICATION_ID"
+								}
+							]
+						},
+						"description": "Tandai notifikasi sebagai sudah dibaca."
+					}
+				},
+				{
+					"name": "Mark All as Read",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notifications/read-all",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", "read-all"]
+						},
+						"description": "Tandai semua notifikasi sebagai sudah dibaca."
+					}
+				}
+			]
+		},
+		{
+			"name": "PDF Downloads",
+			"item": [
+				{
+					"name": "Download Report PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/pdf/report/1",
+							"host": ["{{base_url}}"],
+							"path": ["pdf", "report", "1"]
+						},
+						"description": "Download PDF laporan kunjungan."
+					}
+				},
+				{
+					"name": "Download Quotation PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/pdf/quotation/1",
+							"host": ["{{base_url}}"],
+							"path": ["pdf", "quotation", "1"]
+						},
+						"description": "Download PDF penawaran."
+					}
+				},
+				{
+					"name": "Download Invoice PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/pdf/invoice/1",
+							"host": ["{{base_url}}"],
+							"path": ["pdf", "invoice", "1"]
+						},
+						"description": "Download PDF invoice."
+					}
+				}
+			]
+		}
+	]
+}

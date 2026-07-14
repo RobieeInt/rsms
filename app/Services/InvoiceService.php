@@ -8,6 +8,8 @@ use App\Models\InvoiceItem;
 use App\Models\Quotation;
 use App\Notifications\InvoiceGeneratedNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class InvoiceService
 {
@@ -115,7 +117,11 @@ class InvoiceService
 
             if (!$exists) {
                 $invoice = $this->createFromRetainer($client, 1);
-                $this->markAsSent($invoice);
+                try {
+                    $this->markAsSent($invoice);
+                } catch (Throwable $e) {
+                    Log::warning("Invoice retainer {$client->company_name} dibuat tapi gagal kirim email: ".$e->getMessage());
+                }
             }
         }
     }

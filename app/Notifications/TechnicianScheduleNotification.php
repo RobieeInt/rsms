@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Schedule;
+use App\Notifications\Channels\FcmChannel;
 use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -16,7 +17,22 @@ class TechnicianScheduleNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // 'mail' is listed last: Laravel's synchronous notifyNow() aborts the
+        // remaining channels the moment one throws, and mail (an external
+        // SMTP dependency) is by far the most likely to fail. database/FCM
+        // must not be held hostage by a mail outage.
+        return ['database', FcmChannel::class, 'mail'];
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        $label = $this->type === 'reminder' ? 'Reminder Kunjungan Besok' : 'Jadwal Kunjungan Baru';
+
+        return [
+            'title' => $label,
+            'body' => $this->schedule->client->company_name.' — '.$this->schedule->visit_date->format('d M Y').' '.$this->schedule->start_time,
+            'data' => ['route' => '/schedules/'.$this->schedule->id],
+        ];
     }
 
     public function toArray(object $notifiable): array
