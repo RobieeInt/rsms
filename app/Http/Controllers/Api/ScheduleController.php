@@ -10,6 +10,7 @@ use App\Notifications\AdminAlertNotification;
 use App\Notifications\ScheduleCreatedNotification;
 use App\Notifications\ScheduleUpdatedNotification;
 use App\Notifications\TechnicianScheduleNotification;
+use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -214,6 +215,13 @@ class ScheduleController extends Controller
         }
 
         $schedule->update($data);
+
+        // Completing the schedule auto-completes its visit report (if one
+        // exists yet) and emails the client — see ReportService.
+        $schedule->loadMissing('visitReport');
+        if ($schedule->visitReport) {
+            app(ReportService::class)->syncStatusWithSchedule($schedule->visitReport);
+        }
 
         // Notify admins
         try {

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\VisitReport;
 use App\Models\VisitPhoto;
 use App\Notifications\AdminAlertNotification;
+use App\Services\ReportService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -125,7 +126,7 @@ class ReportForm extends Component
         }
     }
 
-    public function saveReport(string $status = 'draft'): void
+    public function saveReport(): void
     {
         $data = [
             'schedule_id' => $this->schedule->id,
@@ -136,7 +137,6 @@ class ReportForm extends Component
             'client_signed_by' => $this->client_signed_by,
             'technician_signature' => $this->technician_signature ?: null,
             'client_signature' => $this->client_signature ?: null,
-            'status' => $status,
         ];
 
         if ($this->report && $this->report->exists) {
@@ -195,13 +195,15 @@ class ReportForm extends Component
 
         $this->photos = [];
 
-        if ($status === 'completed') {
-            $this->schedule->update(['status' => 'completed']);
-        }
+        // Report status mirrors its schedule — it only becomes 'completed'
+        // when the schedule is checked out (see ScheduleShow::checkOut),
+        // never from a manual toggle here. This also fires the client email
+        // the first time that happens.
+        app(ReportService::class)->syncStatusWithSchedule($report);
 
         $this->dispatch('notify', message: 'Report saved.', type: 'success');
 
-        if ($status === 'completed' && !auth()->user()->hasRole('admin')) {
+        if ($report->status === 'completed' && !auth()->user()->hasRole('admin')) {
             $notif = new AdminAlertNotification(
                 'Laporan Kunjungan Baru',
                 auth()->user()->name . ' submit laporan ' . $report->report_number . ' untuk ' . $this->schedule->client->company_name,
@@ -211,9 +213,7 @@ class ReportForm extends Component
             User::role('admin')->each(fn($admin) => $admin->notifyNow($notif));
         }
 
-        if ($status !== 'draft') {
-            $this->redirect(route('reports.show', $report));
-        }
+        $this->redirect(route('reports.show', $report));
     }
 
     public function saveSignature(string $field, string $data): void

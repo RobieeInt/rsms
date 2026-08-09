@@ -12,6 +12,7 @@ use App\Models\VisitPhoto;
 use App\Models\VisitReport;
 use App\Notifications\AdminAlertNotification;
 use App\Notifications\VisitReportSentNotification;
+use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -62,7 +63,6 @@ class ReportController extends Controller
             'client_signed_by' => ['nullable', 'string'],
             'technician_signature' => ['nullable', 'string'],
             'client_signature' => ['nullable', 'string'],
-            'status' => ['nullable', 'in:draft,completed'],
             'selected_asset_ids' => ['nullable', 'array'],
             'asset_checklists' => ['nullable', 'array'],
             'network_checklist' => ['nullable', 'array'],
@@ -81,7 +81,6 @@ class ReportController extends Controller
                 'client_signed_by' => $validated['client_signed_by'] ?? null,
                 'technician_signature' => $validated['technician_signature'] ?? null,
                 'client_signature' => $validated['client_signature'] ?? null,
-                'status' => $validated['status'] ?? 'draft',
             ]);
 
             // Save asset checklists
@@ -158,24 +157,26 @@ class ReportController extends Controller
                 }
             }
 
-            // If completed, update schedule and notify admins
-            if (($validated['status'] ?? 'draft') === 'completed') {
-                $schedule->update(['status' => 'completed']);
+            // Report status mirrors its schedule — it only becomes
+            // 'completed' when the schedule is checked out (see
+            // ScheduleController::checkOut), never from client-supplied
+            // input. This also fires the client email the first time that
+            // happens.
+            app(ReportService::class)->syncStatusWithSchedule($report);
 
-                if (! $request->user()->hasRole('admin')) {
-                    try {
-                        $admins = User::role('admin')->get();
-                        $admins->each(fn ($admin) => $admin->notifyNow(
-                            new AdminAlertNotification(
-                                'Laporan Dikirim',
-                                $request->user()->name.' mengirim laporan kunjungan '.$report->report_number,
-                                'info',
-                                route('reports.show', $report)
-                            )
-                        ));
-                    } catch (Throwable $e) {
-                        Log::warning('Gagal mengirim notifikasi laporan: '.$e->getMessage());
-                    }
+            if ($report->status === 'completed' && ! $request->user()->hasRole('admin')) {
+                try {
+                    $admins = User::role('admin')->get();
+                    $admins->each(fn ($admin) => $admin->notifyNow(
+                        new AdminAlertNotification(
+                            'Laporan Dikirim',
+                            $request->user()->name.' mengirim laporan kunjungan '.$report->report_number,
+                            'info',
+                            route('reports.show', $report)
+                        )
+                    ));
+                } catch (Throwable $e) {
+                    Log::warning('Gagal mengirim notifikasi laporan: '.$e->getMessage());
                 }
             }
 
@@ -205,7 +206,6 @@ class ReportController extends Controller
             'client_signed_by' => ['nullable', 'string'],
             'technician_signature' => ['nullable', 'string'],
             'client_signature' => ['nullable', 'string'],
-            'status' => ['nullable', 'in:draft,completed,signed'],
             'asset_checklists' => ['nullable', 'array'],
             'network_checklist' => ['nullable', 'array'],
         ]);
@@ -213,7 +213,7 @@ class ReportController extends Controller
         DB::transaction(function () use ($validated, $request, $report) {
             $report->update(collect($validated)->only([
                 'summary', 'overall_notes', 'client_signed_by',
-                'technician_signature', 'client_signature', 'status',
+                'technician_signature', 'client_signature',
             ])->toArray());
 
             if (! empty($validated['asset_checklists'])) {
@@ -287,6 +287,9 @@ class ReportController extends Controller
                 }
             }
         });
+
+        // Report status mirrors its schedule — see store() for why.
+        app(ReportService::class)->syncStatusWithSchedule($report->fresh());
 
         return response()->json([
             'message' => 'Laporan berhasil diperbarui.',

@@ -7,7 +7,7 @@
         <a href="{{ route('schedules.show', $schedule) }}" class="btn-secondary">Back</a>
     </div>
 
-    <form wire:submit.prevent="saveReport('draft')" class="space-y-6">
+    <form wire:submit.prevent="saveReport" class="space-y-6">
 
         {{-- Summary --}}
         <div class="card p-4 lg:p-6">
@@ -203,13 +203,13 @@
 
         {{-- Actions --}}
         <div class="flex flex-wrap gap-3">
-            <button type="button" wire:click="saveReport('draft')" class="btn-secondary flex-1 sm:flex-none justify-center" wire:loading.attr="disabled">Simpan Draft</button>
-            <button type="button" wire:click="saveReport('completed')" class="btn-primary flex-1 sm:flex-none justify-center" wire:loading.attr="disabled">
-                <span wire:loading.remove>Selesaikan Report</span>
+            <button type="button" wire:click="saveReport" class="btn-primary flex-1 sm:flex-none justify-center" wire:loading.attr="disabled">
+                <span wire:loading.remove>Simpan Report</span>
                 <span wire:loading>Menyimpan...</span>
             </button>
             <a href="{{ route('schedules.show', $schedule) }}" class="btn-secondary w-full sm:w-auto justify-center">Batal</a>
         </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Laporan otomatis berstatus "Completed" dan terkirim ke email klien saat jadwal kunjungan ini di-checkout.</p>
     </form>
 </div>
 

@@ -5,6 +5,7 @@ namespace App\Livewire\Schedules;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AdminAlertNotification;
+use App\Services\ReportService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -71,6 +72,12 @@ class ScheduleShow extends Component
         $this->showCheckoutModal = false;
         $this->dispatch('notify', message: 'Checked out successfully!', type: 'success');
         $this->schedule->refresh();
+
+        // Completing the schedule auto-completes its visit report (if one
+        // exists yet) and emails the client — see ReportService.
+        if ($this->schedule->visitReport) {
+            app(ReportService::class)->syncStatusWithSchedule($this->schedule->visitReport);
+        }
 
         $this->notifyAdmins(
             'Teknisi Check Out',
