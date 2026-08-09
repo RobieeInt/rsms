@@ -25,6 +25,13 @@
                     <input type="number" wire:model="monthly_retainer_fee" placeholder="0" min="0" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 focus:border-stone-500 focus:ring-2 focus:ring-stone-500/20 outline-none transition" />
                     @error('monthly_retainer_fee') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                 </div>
+                @if(auth()->user()->hasRole('admin'))
+                <div>
+                    <label class="block text-sm font-medium text-amber-600 dark:text-amber-500 mb-1.5">Modal Retainer (Internal, Opsional)</label>
+                    <input type="number" wire:model="retainer_cost" placeholder="Kosongkan jika tidak ada" min="0" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 focus:border-stone-500 focus:ring-2 focus:ring-stone-500/20 outline-none transition" />
+                    @error('retainer_cost') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+                @endif
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Invoice Due Date (day of month)</label>
                     <input type="number" wire:model="invoice_due_date" placeholder="e.g. 15" min="1" max="28" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 focus:border-stone-500 focus:ring-2 focus:ring-stone-500/20 outline-none transition" />

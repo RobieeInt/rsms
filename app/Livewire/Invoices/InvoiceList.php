@@ -127,6 +127,7 @@ class InvoiceList extends Component
             ->when($this->clientFilter, fn($q) => $q->where('client_id', $this->clientFilter))
             ->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))
             ->orderByDesc('invoice_date')
+            ->orderByDesc('id')
             ->paginate(15);
 
         $clients = Client::where('is_active', true)->orderBy('company_name')->get();

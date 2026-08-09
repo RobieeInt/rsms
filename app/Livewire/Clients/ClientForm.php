@@ -28,6 +28,10 @@ class ClientForm extends Component
     #[Validate('required|numeric|min:0')]
     public string $monthly_retainer_fee = '0';
 
+    // Internal cost documentation for the retainer — admin-only, optional.
+    #[Validate('nullable|numeric|min:0')]
+    public string $retainer_cost = '';
+
     #[Validate('nullable|integer|min:1|max:28')]
     public ?int $invoice_due_date = null;
 
@@ -49,6 +53,12 @@ class ClientForm extends Component
             $this->pic_phone = $client->pic_phone ?? '';
             $this->address = $client->address ?? '';
             $this->monthly_retainer_fee = (string) $client->monthly_retainer_fee;
+            // Only ever loaded into this (public, browser-visible) component
+            // state for admins — a technician must never see it even via
+            // page source, not just have the input hidden.
+            if (auth()->user()->hasRole('admin') && $client->retainer_cost !== null) {
+                $this->retainer_cost = (string) $client->retainer_cost;
+            }
             $this->invoice_due_date = $client->invoice_due_date;
             $this->is_active = $client->is_active;
             $this->notes = $client->notes ?? '';
@@ -70,6 +80,13 @@ class ClientForm extends Component
             'is_active' => $this->is_active,
             'notes' => $this->notes ?: null,
         ];
+
+        // Cost/"modal" documentation is admin-only — the form hides the
+        // input from non-admins, but strip it server-side too in case of
+        // a tampered request.
+        if (auth()->user()->hasRole('admin')) {
+            $data['retainer_cost'] = $this->retainer_cost !== '' ? (float) $this->retainer_cost : null;
+        }
 
         if ($this->client && $this->client->exists) {
             $this->client->update($data);

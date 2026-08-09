@@ -37,12 +37,17 @@ class QuotationForm extends Component
             $this->tax_percent = (float) $quotation->tax_percent;
             $this->discount_amount = (float) $quotation->discount_amount;
             $this->notes = $quotation->notes ?? '';
+            // cost_price is only ever loaded into this (public, browser-visible)
+            // component state for admins — a technician must never see it even
+            // via page source, not just have the input hidden.
+            $isAdmin = auth()->user()->hasRole('admin');
             $this->items = $quotation->items->map(fn($item) => [
                 'description' => $item->description,
                 'detail' => $item->detail,
                 'quantity' => (float) $item->quantity,
                 'unit' => $item->unit,
                 'unit_price' => (float) $item->unit_price,
+                'cost_price' => $isAdmin && $item->cost_price !== null ? (float) $item->cost_price : null,
                 'discount_amount' => (float) $item->discount_amount,
                 'total_price' => (float) $item->total_price,
             ])->toArray();
@@ -66,6 +71,7 @@ class QuotationForm extends Component
                     'quantity' => 1,
                     'unit' => 'unit',
                     'unit_price' => 0,
+                    'cost_price' => null,
                     'discount_amount' => 0,
                     'total_price' => 0,
                     'finding_id' => $finding->id,
@@ -82,7 +88,7 @@ class QuotationForm extends Component
 
     public function addItem(): void
     {
-        $this->items[] = ['description' => '', 'detail' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'discount_amount' => 0, 'total_price' => 0];
+        $this->items[] = ['description' => '', 'detail' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'cost_price' => null, 'discount_amount' => 0, 'total_price' => 0];
     }
 
     public function removeItem(int $index): void
@@ -126,6 +132,21 @@ class QuotationForm extends Component
         ]);
 
         $this->recalculate();
+
+        // Cost/"modal" documentation is admin-only. The form never gives a
+        // non-admin the input to change it, but a tampered request could
+        // still inject a value — so a non-admin's save always reverts every
+        // item's cost_price back to whatever is already in the DB (not to
+        // null), so an unrelated edit (e.g. fixing a typo) can't silently
+        // wipe out cost data an admin already documented.
+        if (! auth()->user()->hasRole('admin')) {
+            $existingCosts = ($this->quotation && $this->quotation->exists)
+                ? $this->quotation->items()->orderBy('sort_order')->pluck('cost_price')->all()
+                : [];
+            foreach ($this->items as $i => $item) {
+                $this->items[$i]['cost_price'] = $existingCosts[$i] ?? null;
+            }
+        }
 
         if ($this->quotation && $this->quotation->exists) {
             $this->quotation->update([

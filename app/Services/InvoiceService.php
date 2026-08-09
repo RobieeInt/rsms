@@ -36,6 +36,7 @@ class InvoiceService
                 'quantity' => 1,
                 'unit' => 'month',
                 'unit_price' => $client->monthly_retainer_fee,
+                'cost_price' => $client->retainer_cost,
                 'total_price' => $client->monthly_retainer_fee,
             ]);
 

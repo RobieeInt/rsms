@@ -59,6 +59,12 @@ class Invoice extends Model
         $this->sendLogs()->create(['type' => $type, 'sent_to' => $sentTo, 'channel' => $channel]);
     }
 
+    /** Internal cost documentation — never shown to the client. */
+    public function totalCost(): float
+    {
+        return (float) $this->items->sum(fn ($item) => $item->cost_price !== null ? $item->cost_price * $item->quantity : 0);
+    }
+
     public static function generateNumber(): string
     {
         $year = now()->format('Y');

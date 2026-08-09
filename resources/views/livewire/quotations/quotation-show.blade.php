@@ -55,6 +55,9 @@
                                 @if($item->detail)
                                 <div class="mt-1 text-xs text-slate-500 dark:text-slate-400 whitespace-pre-line">{{ $item->detail }}</div>
                                 @endif
+                                @if(auth()->user()->hasRole('admin') && $item->cost_price !== null)
+                                <div class="mt-1 text-xs text-amber-600 dark:text-amber-500">Modal: Rp {{ number_format($item->cost_price, 0, ',', '.') }}</div>
+                                @endif
                             </td>
                             <td class="py-3 text-right text-slate-600 dark:text-slate-400">{{ $item->quantity }} {{ $item->unit }}</td>
                             <td class="py-3 text-right text-slate-600 dark:text-slate-400">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
@@ -83,6 +86,14 @@
                         <div class="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-2 text-slate-900 dark:text-white">
                             <span>Total</span><span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</span>
                         </div>
+                        @if(auth()->user()->hasRole('admin'))
+                        <div class="flex justify-between text-amber-600 dark:text-amber-500 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                            <span>Total Modal (Internal)</span><span class="font-medium">Rp {{ number_format($quotation->totalCost(), 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-600 dark:text-emerald-500">
+                            <span>Margin (Internal)</span><span class="font-medium">Rp {{ number_format($quotation->total_amount - $quotation->totalCost(), 0, ',', '.') }}</span>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

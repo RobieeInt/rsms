@@ -37,11 +37,16 @@ class InvoiceForm extends Component
             $this->tax_percent = (float) $invoice->tax_percent;
             $this->discount_amount = (float) $invoice->discount_amount;
             $this->notes = $invoice->notes ?? '';
+            // cost_price is only ever loaded into this (public, browser-visible)
+            // component state for admins — a technician must never see it even
+            // via page source, not just have the input hidden.
+            $isAdmin = auth()->user()->hasRole('admin');
             $this->items = $invoice->items->map(fn($item) => [
                 'description' => $item->description,
                 'quantity' => (float) $item->quantity,
                 'unit' => $item->unit,
                 'unit_price' => (float) $item->unit_price,
+                'cost_price' => $isAdmin && $item->cost_price !== null ? (float) $item->cost_price : null,
                 'total_price' => (float) $item->total_price,
             ])->toArray();
         }
@@ -54,7 +59,7 @@ class InvoiceForm extends Component
 
     public function addItem(): void
     {
-        $this->items[] = ['description' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'total_price' => 0];
+        $this->items[] = ['description' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'cost_price' => null, 'total_price' => 0];
     }
 
     public function removeItem(int $index): void
@@ -94,6 +99,21 @@ class InvoiceForm extends Component
         ]);
 
         $this->recalculate();
+
+        // Cost/"modal" documentation is admin-only. The form never gives a
+        // non-admin the input to change it, but a tampered request could
+        // still inject a value — so a non-admin's save always reverts every
+        // item's cost_price back to whatever is already in the DB (not to
+        // null), so an unrelated edit (e.g. fixing a typo) can't silently
+        // wipe out cost data an admin already documented.
+        if (! auth()->user()->hasRole('admin')) {
+            $existingCosts = ($this->invoice && $this->invoice->exists)
+                ? $this->invoice->items()->orderBy('sort_order')->pluck('cost_price')->all()
+                : [];
+            foreach ($this->items as $i => $item) {
+                $this->items[$i]['cost_price'] = $existingCosts[$i] ?? null;
+            }
+        }
 
         $data = [
             'client_id' => $this->client_id,

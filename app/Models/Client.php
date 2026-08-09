@@ -18,13 +18,14 @@ class Client extends Model
 
     protected $fillable = [
         'company_name', 'pic_name', 'pic_email', 'pic_phone', 'address',
-        'monthly_retainer_fee', 'invoice_due_date', 'is_active', 'notes',
+        'monthly_retainer_fee', 'retainer_cost', 'invoice_due_date', 'is_active', 'notes',
         'health_score', 'health_status',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'monthly_retainer_fee' => 'decimal:2',
+        'retainer_cost' => 'decimal:2',
         'health_score' => 'decimal:2',
         'invoice_due_date' => 'integer',
     ];

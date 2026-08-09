@@ -41,6 +41,9 @@
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-20 text-right">Qty</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-20 text-center">Unit</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-36 text-right">Unit Price</th>
+                            @if(auth()->user()->hasRole('admin'))
+                            <th class="py-2 font-medium text-amber-600 dark:text-amber-500 w-36 text-right">Modal (Internal)</th>
+                            @endif
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-28 text-right">Discount</th>
                             <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-36 text-right">Total</th>
                             <th class="w-10"></th>
@@ -63,6 +66,11 @@
                             <td class="py-2 px-2">
                                 <input wire:model.blur="items.{{ $i }}.unit_price" wire:change="updateItemTotal({{ $i }})" type="number" min="0" step="1000" class="form-input py-1.5 text-right">
                             </td>
+                            @if(auth()->user()->hasRole('admin'))
+                            <td class="py-2 px-2">
+                                <input wire:model.live.debounce.500ms="items.{{ $i }}.cost_price" type="number" min="0" step="1000" class="form-input py-1.5 text-right" placeholder="Opsional">
+                            </td>
+                            @endif
                             <td class="py-2 px-2">
                                 <input wire:model.blur="items.{{ $i }}.discount_amount" wire:change="updateItemTotal({{ $i }})" type="number" min="0" step="1000" class="form-input py-1.5 text-right" placeholder="0">
                             </td>
@@ -111,6 +119,20 @@
                         <span class="text-slate-900 dark:text-white">Total</span>
                         <span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
                     </div>
+                    @if(auth()->user()->hasRole('admin'))
+                    @php
+                        $totalCost = collect($items)->sum(fn($i) => ($i['cost_price'] ?? null) !== null ? $i['cost_price'] * $i['quantity'] : 0);
+                        $margin = $total_amount - $totalCost;
+                    @endphp
+                    <div class="flex justify-between text-amber-600 dark:text-amber-500 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                        <span>Total Modal (Internal)</span>
+                        <span class="font-medium">Rp {{ number_format($totalCost, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between text-emerald-600 dark:text-emerald-500">
+                        <span>Margin (Internal)</span>
+                        <span class="font-medium">Rp {{ number_format($margin, 0, ',', '.') }}</span>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

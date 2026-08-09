@@ -43,6 +43,7 @@ class InvoiceController extends Controller
         }
 
         $invoices = $query->orderByDesc('invoice_date')
+            ->orderByDesc('id')
             ->paginate($request->input('per_page', 15));
 
         $totalUnpaid = Invoice::whereIn('status', ['sent', 'overdue'])->sum('total_amount');
