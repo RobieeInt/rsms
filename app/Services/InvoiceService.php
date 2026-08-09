@@ -6,6 +6,8 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Quotation;
+use App\Models\User;
+use App\Notifications\AdminAlertNotification;
 use App\Notifications\InvoiceGeneratedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -121,6 +123,21 @@ class InvoiceService
                     $this->markAsSent($invoice);
                 } catch (Throwable $e) {
                     Log::warning("Invoice retainer {$client->company_name} dibuat tapi gagal kirim email: ".$e->getMessage());
+
+                    // A silently-undelivered retainer invoice is easy to
+                    // miss if it's only logged — surface it to admins too.
+                    // Guarded separately so a failure here can't also
+                    // interrupt the loop over the remaining clients.
+                    try {
+                        $notif = new AdminAlertNotification(
+                            'Invoice Gagal Terkirim',
+                            "Invoice retainer {$invoice->invoice_number} untuk {$client->company_name} dibuat tapi emailnya gagal terkirim otomatis.",
+                            'warning'
+                        );
+                        User::role('admin')->get()->each(fn ($admin) => $admin->notifyNow($notif));
+                    } catch (Throwable $e2) {
+                        Log::warning('Gagal mengirim alert admin untuk invoice yang gagal terkirim: '.$e2->getMessage());
+                    }
                 }
             }
         }

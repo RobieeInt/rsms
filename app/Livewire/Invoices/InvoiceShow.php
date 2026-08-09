@@ -70,7 +70,7 @@ class InvoiceShow extends Component
 
     public function render()
     {
-        $this->invoice->load(['client', 'creator', 'items', 'sendLogs']);
+        $this->invoice->load(['client', 'creator', 'items', 'sendLogs', 'quotation']);
 
         return view('livewire.invoices.invoice-show')
             ->layout('layouts.app', ['title' => $this->invoice->invoice_number]);

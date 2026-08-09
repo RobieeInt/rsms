@@ -57,12 +57,22 @@ class ScheduleForm extends Component
         ];
 
         if ($this->schedule && $this->schedule->exists) {
+            $previousTechnicianId = $this->schedule->technician_id;
+
             $this->schedule->update($data);
             $this->schedule->load(['client', 'technician']);
 
             // Email ke klien saat jadwal diperbarui
             if ($this->schedule->client->pic_email) {
                 $this->schedule->client->notifyNow(new ScheduleUpdatedNotification($this->schedule));
+            }
+
+            // Reassignment: both the outgoing and incoming technician need
+            // to know — neither previously got notified of this at all.
+            if ($previousTechnicianId !== $this->schedule->technician_id) {
+                $previousTechnician = User::find($previousTechnicianId);
+                $previousTechnician?->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
+                $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'reassigned'));
             }
         } else {
             $schedule = Schedule::create($data);

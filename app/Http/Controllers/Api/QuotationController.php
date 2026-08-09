@@ -18,6 +18,8 @@ class QuotationController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Quotation::class);
+
         $query = Quotation::with('client');
 
         if ($search = $request->input('search')) {
@@ -78,6 +80,8 @@ class QuotationController extends Controller
 
     public function show(Quotation $quotation): QuotationResource
     {
+        $this->authorize('view', $quotation);
+
         $quotation->load(['client', 'creator', 'items', 'invoice']);
 
         return new QuotationResource($quotation);
@@ -85,6 +89,8 @@ class QuotationController extends Controller
 
     public function update(Request $request, Quotation $quotation): JsonResponse
     {
+        $this->authorize('update', $quotation);
+
         $validated = $request->validate([
             'client_id' => ['sometimes', 'required', 'exists:clients,id'],
             'date' => ['sometimes', 'required', 'date'],
@@ -149,6 +155,8 @@ class QuotationController extends Controller
 
     public function destroy(Quotation $quotation): JsonResponse
     {
+        $this->authorize('delete', $quotation);
+
         $quotation->delete();
 
         return response()->json([
@@ -158,6 +166,8 @@ class QuotationController extends Controller
 
     public function send(Quotation $quotation, QuotationService $quotationService): JsonResponse
     {
+        $this->authorize('update', $quotation);
+
         if ($quotation->status !== 'draft') {
             return response()->json([
                 'message' => 'Hanya penawaran dengan status draft yang bisa dikirim.',
@@ -174,6 +184,8 @@ class QuotationController extends Controller
 
     public function convertToInvoice(Request $request, Quotation $quotation, InvoiceService $invoiceService): JsonResponse
     {
+        $this->authorize('update', $quotation);
+
         if ($quotation->status !== 'approved') {
             return response()->json([
                 'message' => 'Hanya penawaran yang disetujui yang bisa diubah ke invoice.',

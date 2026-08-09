@@ -7,6 +7,7 @@ use App\Http\Resources\ScheduleResource;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AdminAlertNotification;
+use App\Notifications\ScheduleCancelledNotification;
 use App\Notifications\ScheduleCreatedNotification;
 use App\Notifications\ScheduleUpdatedNotification;
 use App\Notifications\TechnicianScheduleNotification;
@@ -97,6 +98,8 @@ class ScheduleController extends Controller
 
     public function show(Schedule $schedule): ScheduleResource
     {
+        $this->authorize('view', $schedule);
+
         $schedule->load(['client', 'technician', 'visitReport']);
 
         return new ScheduleResource($schedule);
@@ -104,6 +107,8 @@ class ScheduleController extends Controller
 
     public function update(Request $request, Schedule $schedule): JsonResponse
     {
+        $this->authorize('update', $schedule);
+
         $validated = $request->validate([
             'client_id' => ['sometimes', 'required', 'exists:clients,id'],
             'technician_id' => ['sometimes', 'required', 'exists:users,id'],
@@ -113,6 +118,8 @@ class ScheduleController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $previousTechnicianId = $schedule->technician_id;
+
         $schedule->update($validated);
         $schedule = $schedule->fresh()->load(['client', 'technician']);
 
@@ -121,6 +128,13 @@ class ScheduleController extends Controller
         try {
             if ($schedule->client && $schedule->client->pic_email) {
                 $schedule->client->notifyNow(new ScheduleUpdatedNotification($schedule));
+            }
+
+            // Reassignment: both the outgoing and incoming technician need
+            // to know — neither previously got notified of this at all.
+            if ($previousTechnicianId !== $schedule->technician_id) {
+                User::find($previousTechnicianId)?->notifyNow(new TechnicianScheduleNotification($schedule, 'cancelled'));
+                $schedule->technician->notifyNow(new TechnicianScheduleNotification($schedule, 'reassigned'));
             }
         } catch (Throwable $e) {
             Log::warning('Gagal mengirim notifikasi jadwal diperbarui: '.$e->getMessage());
@@ -134,6 +148,8 @@ class ScheduleController extends Controller
 
     public function destroy(Schedule $schedule): JsonResponse
     {
+        $this->authorize('delete', $schedule);
+
         $schedule->delete();
 
         return response()->json([
@@ -143,6 +159,8 @@ class ScheduleController extends Controller
 
     public function checkIn(Request $request, Schedule $schedule): JsonResponse
     {
+        $this->authorize('update', $schedule);
+
         if ($schedule->status !== 'scheduled') {
             return response()->json([
                 'message' => 'Hanya jadwal dengan status scheduled yang bisa check-in.',
@@ -191,6 +209,8 @@ class ScheduleController extends Controller
 
     public function checkOut(Request $request, Schedule $schedule): JsonResponse
     {
+        $this->authorize('update', $schedule);
+
         if ($schedule->status !== 'in_progress') {
             return response()->json([
                 'message' => 'Hanya jadwal dengan status in_progress yang bisa check-out.',
@@ -246,11 +266,25 @@ class ScheduleController extends Controller
 
     public function cancel(Schedule $schedule): JsonResponse
     {
+        // Matches the web app's admin-only cancel button — reuses the
+        // 'delete' ability since SchedulePolicy already restricts it to admins.
+        $this->authorize('delete', $schedule);
+
         $schedule->update(['status' => 'cancelled']);
+        $schedule = $schedule->fresh()->load(['client', 'technician']);
+
+        try {
+            $schedule->technician->notifyNow(new TechnicianScheduleNotification($schedule, 'cancelled'));
+            if ($schedule->client && $schedule->client->pic_email) {
+                $schedule->client->notifyNow(new ScheduleCancelledNotification($schedule));
+            }
+        } catch (Throwable $e) {
+            Log::warning('Gagal mengirim notifikasi pembatalan jadwal: '.$e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Jadwal berhasil dibatalkan.',
-            'data' => new ScheduleResource($schedule->fresh()->load(['client', 'technician'])),
+            'data' => new ScheduleResource($schedule),
         ]);
     }
 }

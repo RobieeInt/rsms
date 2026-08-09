@@ -66,6 +66,7 @@ class ReportController extends Controller
             'selected_asset_ids' => ['nullable', 'array'],
             'asset_checklists' => ['nullable', 'array'],
             'network_checklist' => ['nullable', 'array'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
@@ -189,6 +190,8 @@ class ReportController extends Controller
 
     public function show(VisitReport $report): VisitReportResource
     {
+        $this->authorize('view', $report);
+
         $report->load([
             'client', 'technician', 'schedule',
             'assetChecklists.asset', 'assetChecklists.template',
@@ -200,6 +203,8 @@ class ReportController extends Controller
 
     public function update(Request $request, VisitReport $report): JsonResponse
     {
+        $this->authorize('update', $report);
+
         $validated = $request->validate([
             'summary' => ['nullable', 'string'],
             'overall_notes' => ['nullable', 'string'],
@@ -208,6 +213,7 @@ class ReportController extends Controller
             'client_signature' => ['nullable', 'string'],
             'asset_checklists' => ['nullable', 'array'],
             'network_checklist' => ['nullable', 'array'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
         ]);
 
         DB::transaction(function () use ($validated, $request, $report) {
@@ -302,6 +308,8 @@ class ReportController extends Controller
 
     public function destroy(VisitReport $report): JsonResponse
     {
+        $this->authorize('delete', $report);
+
         $report->delete();
 
         return response()->json([

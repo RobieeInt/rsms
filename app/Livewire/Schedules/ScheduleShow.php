@@ -5,6 +5,8 @@ namespace App\Livewire\Schedules;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AdminAlertNotification;
+use App\Notifications\ScheduleCancelledNotification;
+use App\Notifications\TechnicianScheduleNotification;
 use App\Services\ReportService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -95,9 +97,16 @@ class ScheduleShow extends Component
 
     public function cancel(): void
     {
+        $this->schedule->load(['client', 'technician']);
+
         $this->schedule->update(['status' => 'cancelled']);
         $this->dispatch('notify', message: 'Schedule cancelled.', type: 'warning');
         $this->schedule->refresh();
+
+        $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
+        if ($this->schedule->client->pic_email) {
+            $this->schedule->client->notifyNow(new ScheduleCancelledNotification($this->schedule));
+        }
     }
 
     public function render()

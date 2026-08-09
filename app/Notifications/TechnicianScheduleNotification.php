@@ -12,7 +12,7 @@ class TechnicianScheduleNotification extends Notification
 {
     public function __construct(
         public Schedule $schedule,
-        public string $type = 'created' // created | reminder
+        public string $type = 'created' // created | reminder | reassigned | cancelled
     ) {}
 
     public function via(object $notifiable): array
@@ -24,12 +24,20 @@ class TechnicianScheduleNotification extends Notification
         return ['database', FcmChannel::class, 'mail'];
     }
 
+    private function label(): string
+    {
+        return match ($this->type) {
+            'reminder' => 'Reminder Kunjungan Besok',
+            'reassigned' => 'Jadwal Dialihkan',
+            'cancelled' => 'Jadwal Dibatalkan',
+            default => 'Jadwal Kunjungan Baru',
+        };
+    }
+
     public function toFcm(object $notifiable): array
     {
-        $label = $this->type === 'reminder' ? 'Reminder Kunjungan Besok' : 'Jadwal Kunjungan Baru';
-
         return [
-            'title' => $label,
+            'title' => $this->label(),
             'body' => $this->schedule->client->company_name.' — '.$this->schedule->visit_date->format('d M Y').' '.$this->schedule->start_time,
             'data' => ['route' => '/schedules/'.$this->schedule->id],
         ];
@@ -37,10 +45,9 @@ class TechnicianScheduleNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $label = $this->type === 'reminder' ? 'Reminder Kunjungan Besok' : 'Jadwal Kunjungan Baru';
         return [
             'type'        => 'technician_schedule_' . $this->type,
-            'title'       => $label,
+            'title'       => $this->label(),
             'message'     => $this->schedule->client->company_name . ' — ' . $this->schedule->visit_date->format('d M Y') . ' ' . $this->schedule->start_time,
             'schedule_id' => $this->schedule->id,
         ];
@@ -57,13 +64,24 @@ class TechnicianScheduleNotification extends Notification
         $client   = $schedule->client->company_name;
         $address  = $schedule->client->address ?? '-';
 
-        if ($this->type === 'reminder') {
-            $subject = "⏰ Reminder Kunjungan Besok — {$client}";
-            $intro   = 'Ini adalah pengingat bahwa kamu memiliki jadwal kunjungan **besok**.';
-        } else {
-            $subject = "Jadwal Kunjungan Baru — {$client}";
-            $intro   = 'Kamu mendapatkan jadwal kunjungan IT maintenance baru.';
-        }
+        [$subject, $intro] = match ($this->type) {
+            'reminder' => [
+                "⏰ Reminder Kunjungan Besok — {$client}",
+                'Ini adalah pengingat bahwa kamu memiliki jadwal kunjungan **besok**.',
+            ],
+            'reassigned' => [
+                "Jadwal Dialihkan Ke Kamu — {$client}",
+                'Sebuah jadwal kunjungan IT maintenance telah dialihkan ke kamu.',
+            ],
+            'cancelled' => [
+                "Jadwal Dibatalkan — {$client}",
+                'Jadwal kunjungan berikut telah **dibatalkan** dan tidak perlu kamu datangi.',
+            ],
+            default => [
+                "Jadwal Kunjungan Baru — {$client}",
+                'Kamu mendapatkan jadwal kunjungan IT maintenance baru.',
+            ],
+        };
 
         $mail = (new MailMessage)
             ->subject($subject)

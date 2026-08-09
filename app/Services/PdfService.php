@@ -39,7 +39,7 @@ class PdfService
 
     public function generateInvoice(Invoice $invoice): \Barryvdh\DomPDF\PDF
     {
-        $invoice->load(['client', 'creator', 'items']);
+        $invoice->load(['client', 'creator', 'items', 'quotation']);
         $company = CompanySetting::getSettings();
 
         Carbon::setLocale('id');

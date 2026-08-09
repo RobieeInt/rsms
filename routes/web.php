@@ -10,14 +10,14 @@ use Livewire\Volt\Volt;
 // Auth
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Public quotation approval
 Route::get('/quotation/approve/{token}', [QuotationApprovalController::class, 'show'])->name('quotation.approve');
-Route::post('/quotation/approve/{token}', [QuotationApprovalController::class, 'process'])->name('quotation.approve.post');
+Route::post('/quotation/approve/{token}', [QuotationApprovalController::class, 'process'])->name('quotation.approve.post')->middleware('throttle:5,1');
 
 // Public PDF downloads via signed URL (no login required)
 Route::get('/invoice/download/{invoice}', [PdfController::class, 'invoicePublic'])->name('invoice.pdf.public')->middleware('signed');
@@ -34,10 +34,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/clients/{client}/edit', \App\Livewire\Clients\ClientForm::class)->name('clients.edit');
     Route::get('/clients/{client}', \App\Livewire\Clients\ClientShow::class)->name('clients.show');
 
-    // Technicians
-    Route::get('/technicians', \App\Livewire\Technicians\TechnicianList::class)->name('technicians.index');
-    Route::get('/technicians/create', \App\Livewire\Technicians\TechnicianForm::class)->name('technicians.create');
-    Route::get('/technicians/{user}/edit', \App\Livewire\Technicians\TechnicianForm::class)->name('technicians.edit');
+    // Technicians — account management is admin-only (editing includes
+    // setting another user's password), so this must never be reachable by
+    // a plain technician.
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/technicians', \App\Livewire\Technicians\TechnicianList::class)->name('technicians.index');
+        Route::get('/technicians/create', \App\Livewire\Technicians\TechnicianForm::class)->name('technicians.create');
+        Route::get('/technicians/{user}/edit', \App\Livewire\Technicians\TechnicianForm::class)->name('technicians.edit');
+    });
 
     // Assets
     Route::get('/assets', \App\Livewire\Assets\AssetList::class)->name('assets.index');

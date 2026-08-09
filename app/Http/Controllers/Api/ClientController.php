@@ -42,6 +42,8 @@ class ClientController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create', Client::class);
+
         $validated = $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
             'pic_name' => ['required', 'string', 'max:255'],
@@ -75,6 +77,8 @@ class ClientController extends Controller
 
     public function update(Request $request, Client $client): JsonResponse
     {
+        $this->authorize('update', $client);
+
         $validated = $request->validate([
             'company_name' => ['sometimes', 'required', 'string', 'max:255'],
             'pic_name' => ['sometimes', 'required', 'string', 'max:255'],
@@ -99,6 +103,8 @@ class ClientController extends Controller
 
     public function destroy(Client $client): JsonResponse
     {
+        $this->authorize('delete', $client);
+
         $client->delete();
 
         return response()->json([
@@ -108,6 +114,8 @@ class ClientController extends Controller
 
     public function generateRetainer(Client $client, InvoiceService $invoiceService): JsonResponse
     {
+        $this->authorize('update', $client);
+
         if ($client->monthly_retainer_fee <= 0) {
             return response()->json([
                 'message' => 'Client ini tidak memiliki biaya retainer.',

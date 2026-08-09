@@ -79,6 +79,8 @@ class FindingController extends Controller
 
     public function show(Finding $finding): FindingResource
     {
+        $this->authorize('view', $finding);
+
         $finding->load(['client', 'asset', 'reporter', 'recommendations.creator']);
 
         return new FindingResource($finding);
@@ -86,6 +88,8 @@ class FindingController extends Controller
 
     public function update(Request $request, Finding $finding): JsonResponse
     {
+        $this->authorize('update', $finding);
+
         $validated = $request->validate([
             'client_id' => ['sometimes', 'required', 'exists:clients,id'],
             'asset_id' => ['nullable', 'exists:assets,id'],
@@ -115,6 +119,8 @@ class FindingController extends Controller
 
     public function destroy(Finding $finding): JsonResponse
     {
+        $this->authorize('delete', $finding);
+
         $finding->delete();
 
         // Recalculate client health score
@@ -128,6 +134,8 @@ class FindingController extends Controller
 
     public function addRecommendation(Request $request, Finding $finding): JsonResponse
     {
+        $this->authorize('update', $finding);
+
         $validated = $request->validate([
             'recommendation' => ['required', 'string'],
             'priority' => ['required', 'in:low,medium,high'],
@@ -148,6 +156,8 @@ class FindingController extends Controller
 
     public function updateStatus(Request $request, Finding $finding): JsonResponse
     {
+        $this->authorize('update', $finding);
+
         $validated = $request->validate([
             'status' => ['required', 'in:open,monitoring,resolved'],
         ]);

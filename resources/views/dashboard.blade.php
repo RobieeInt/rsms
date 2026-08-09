@@ -187,6 +187,9 @@
             @foreach($revenueData as $data)
             <div class="flex-1 flex flex-col items-center gap-1 group">
                 <div class="relative w-full">
+                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 rounded-md bg-slate-900 dark:bg-slate-700 text-white text-[10px] font-medium shadow-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none z-10">
+                        {{ $data['month'] }}: Rp {{ number_format($data['revenue'], 0, ',', '.') }}
+                    </div>
                     <div
                         class="w-full bg-stone-500 dark:bg-stone-600 rounded-t-sm group-hover:bg-stone-600 dark:group-hover:bg-stone-500 transition-colors cursor-default"
                         style="height: {{ max(4, ($data['revenue'] / $maxRevenue) * 120) }}px"

@@ -3,6 +3,7 @@
 namespace App\Livewire\Quotations;
 
 use App\Models\Client;
+use App\Models\Finding;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
 use App\Services\QuotationService;
@@ -45,6 +46,31 @@ class QuotationForm extends Component
                 'discount_amount' => (float) $item->discount_amount,
                 'total_price' => (float) $item->total_price,
             ])->toArray();
+        }
+
+        // "Create Quotation" from a Finding (finding-show.blade.php) links
+        // here with ?finding=ID — prefill the client + a starter line item
+        // from it instead of leaving the admin to retype it from scratch.
+        // Only applies when creating fresh; never overrides an existing
+        // quotation being edited.
+        if (! $this->quotation && ($findingId = request()->integer('finding'))) {
+            $finding = Finding::with('recommendations')->find($findingId);
+
+            if ($finding) {
+                $this->client_id = $finding->client_id;
+                $this->items[] = [
+                    'description' => $finding->title . ($finding->recommendations->first()
+                        ? ': ' . $finding->recommendations->first()->recommendation
+                        : ''),
+                    'detail' => $finding->description,
+                    'quantity' => 1,
+                    'unit' => 'unit',
+                    'unit_price' => 0,
+                    'discount_amount' => 0,
+                    'total_price' => 0,
+                    'finding_id' => $finding->id,
+                ];
+            }
         }
 
         if (empty($this->items)) {

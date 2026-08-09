@@ -219,6 +219,11 @@ html, body {
                         Jatuh tempo: {{ $invoice->due_date->locale('id')->translatedFormat('d M Y') }}
                     </div>
                     @endif
+                    @if($invoice->quotation)
+                    <div style="font-size:10px; color:#666; margin-top:3px;">
+                        Dari Penawaran: {{ $invoice->quotation->quotation_number }}
+                    </div>
+                    @endif
                 </td>
                 <td style="width:8%;"></td>
                 <td style="width:46%; vertical-align:top;">
@@ -248,7 +253,12 @@ html, body {
             <tbody>
                 @foreach($invoice->items as $item)
                 <tr>
-                    <td>{{ $item->description }}</td>
+                    <td>
+                        {{ $item->description }}
+                        @if($item->detail)
+                        <div style="font-size:9px; color:#777; margin-top:2px;">{{ $item->detail }}</div>
+                        @endif
+                    </td>
                     <td class="r">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
                     <td class="r">{{ number_format($item->quantity, 0, ',', '.') }}</td>
                     <td class="r">{{ number_format($item->total_price, 0, ',', '.') }}</td>

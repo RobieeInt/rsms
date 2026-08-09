@@ -43,6 +43,9 @@
                     <div><dt class="text-slate-500 dark:text-slate-400">Invoice Date</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $invoice->invoice_date->format('d F Y') }}</dd></div>
                     <div><dt class="text-slate-500 dark:text-slate-400">Due Date</dt><dd class="font-semibold {{ $invoice->isOverdue() ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white' }} mt-1">{{ $invoice->due_date->format('d F Y') }}</dd></div>
                     <div><dt class="text-slate-500 dark:text-slate-400">Type</dt><dd class="mt-1"><span class="badge-gray">{{ ucfirst($invoice->type) }}</span></dd></div>
+                    @if($invoice->quotation)
+                    <div><dt class="text-slate-500 dark:text-slate-400">Dari Penawaran</dt><dd class="font-semibold mt-1"><a href="{{ route('quotations.show', $invoice->quotation) }}" class="text-stone-600 dark:text-stone-400 hover:underline">{{ $invoice->quotation->quotation_number }}</a></dd></div>
+                    @endif
                     @if($invoice->payment_date)
                     <div><dt class="text-slate-500 dark:text-slate-400">Payment Date</dt><dd class="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{{ $invoice->payment_date->format('d F Y') }}</dd></div>
                     <div><dt class="text-slate-500 dark:text-slate-400">Payment Method</dt><dd class="font-semibold text-slate-900 dark:text-white mt-1">{{ $invoice->payment_method }}</dd></div>
@@ -61,7 +64,12 @@
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                         @foreach($invoice->items as $item)
                         <tr>
-                            <td class="py-3">{{ $item->description }}</td>
+                            <td class="py-3">
+                                {{ $item->description }}
+                                @if($item->detail)
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $item->detail }}</div>
+                                @endif
+                            </td>
                             <td class="py-3 text-right text-slate-600 dark:text-slate-400">{{ $item->quantity }} {{ $item->unit }}</td>
                             <td class="py-3 text-right text-slate-600 dark:text-slate-400">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
                             <td class="py-3 text-right font-medium text-slate-900 dark:text-white">Rp {{ number_format($item->total_price, 0, ',', '.') }}</td>

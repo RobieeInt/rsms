@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Route;
 // lookup and route('clients.index') in the web app starts pointing at /api/*).
 Route::name('api.')->group(function () {
     // Public routes
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/quotation/approve/{token}', [QuotationApprovalController::class, 'process']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/quotation/approve/{token}', [QuotationApprovalController::class, 'process'])->middleware('throttle:5,1');
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -49,8 +49,12 @@ Route::name('api.')->group(function () {
         Route::apiResource('clients', ClientController::class);
         Route::post('/clients/{client}/generate-retainer', [ClientController::class, 'generateRetainer']);
 
-        // Technicians
-        Route::apiResource('technicians', TechnicianController::class);
+        // Technicians — account management is admin-only (creating/editing
+        // includes setting another user's password, so this must never be
+        // reachable by a plain technician).
+        Route::middleware('role:admin')->group(function () {
+            Route::apiResource('technicians', TechnicianController::class);
+        });
 
         // Assets
         Route::apiResource('assets', AssetController::class);

@@ -17,6 +17,8 @@ class InvoiceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Invoice::class);
+
         $query = Invoice::with(['client', 'sendLogs']);
 
         if ($search = $request->input('search')) {
@@ -118,6 +120,8 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice): InvoiceResource
     {
+        $this->authorize('view', $invoice);
+
         $invoice->load(['client', 'creator', 'items', 'sendLogs']);
 
         return new InvoiceResource($invoice);
@@ -125,6 +129,8 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Invoice $invoice): JsonResponse
     {
+        $this->authorize('update', $invoice);
+
         $validated = $request->validate([
             'client_id' => ['sometimes', 'required', 'exists:clients,id'],
             'type' => ['sometimes', 'in:retainer,quotation,manual'],
@@ -185,6 +191,8 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice): JsonResponse
     {
+        $this->authorize('delete', $invoice);
+
         $invoice->delete();
 
         return response()->json([
@@ -194,6 +202,8 @@ class InvoiceController extends Controller
 
     public function send(Invoice $invoice, InvoiceService $invoiceService): JsonResponse
     {
+        $this->authorize('update', $invoice);
+
         if ($invoice->status !== 'draft') {
             return response()->json([
                 'message' => 'Hanya invoice dengan status draft yang bisa dikirim.',
@@ -210,6 +220,8 @@ class InvoiceController extends Controller
 
     public function resendEmail(Invoice $invoice): JsonResponse
     {
+        $this->authorize('update', $invoice);
+
         if (! $invoice->client || ! $invoice->client->pic_email) {
             return response()->json([
                 'message' => 'Client tidak memiliki email PIC.',
@@ -227,10 +239,12 @@ class InvoiceController extends Controller
 
     public function markAsPaid(Request $request, Invoice $invoice, InvoiceService $invoiceService): JsonResponse
     {
+        $this->authorize('update', $invoice);
+
         $validated = $request->validate([
             'payment_date' => ['required', 'date'],
             'payment_method' => ['required', 'string'],
-            'payment_proof' => ['nullable', 'file', 'max:5120'],
+            'payment_proof' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,pdf'],
             'payment_notes' => ['nullable', 'string'],
         ]);
 
@@ -248,6 +262,8 @@ class InvoiceController extends Controller
 
     public function generateRetainer(Request $request, InvoiceService $invoiceService): JsonResponse
     {
+        $this->authorize('create', Invoice::class);
+
         $request->validate([
             'client_id' => ['required', 'exists:clients,id'],
         ]);
