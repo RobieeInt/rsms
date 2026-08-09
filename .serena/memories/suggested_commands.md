@@ -1,0 +1,5 @@
+- `composer dev` — full local dev stack in one terminal (server + queue worker + pail log tailer + vite), color-coded, kills all on exit. Preferred over running `php artisan serve` alone.
+- `npm run dev` / `npm run build` — Vite only, if not using `composer dev`.
+- `composer test` — clears config cache then `php artisan test`. NOTE: `tests/Feature` and `tests/Unit` currently only contain the Laravel-default `ExampleTest.php` — there is no real test suite yet (see `mem:task_completion`).
+- `./vendor/bin/pint` — code style fixer (Laravel Pint), available via require-dev.
+- Darwin-specific: standard BSD `find`/`grep` apply; no notable divergence found from typical unix usage in this project's own tooling.

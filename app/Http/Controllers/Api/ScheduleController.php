@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AdminAlertNotification;
 use App\Notifications\ScheduleCreatedNotification;
+use App\Notifications\ScheduleUpdatedNotification;
 use App\Notifications\TechnicianScheduleNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -112,10 +113,21 @@ class ScheduleController extends Controller
         ]);
 
         $schedule->update($validated);
+        $schedule = $schedule->fresh()->load(['client', 'technician']);
+
+        // Notifications are best-effort: a mail/SMTP outage must not make an
+        // otherwise-successful schedule update look like it failed.
+        try {
+            if ($schedule->client && $schedule->client->pic_email) {
+                $schedule->client->notifyNow(new ScheduleUpdatedNotification($schedule));
+            }
+        } catch (Throwable $e) {
+            Log::warning('Gagal mengirim notifikasi jadwal diperbarui: '.$e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Jadwal berhasil diperbarui.',
-            'data' => new ScheduleResource($schedule->fresh()->load(['client', 'technician'])),
+            'data' => new ScheduleResource($schedule),
         ]);
     }
 

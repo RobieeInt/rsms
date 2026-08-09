@@ -2,7 +2,7 @@
     <div class="page-header">
         <div>
             <h2 class="page-title">Notifikasi</h2>
-            <p class="page-subtitle">{{ auth()->user()->belum dibacaNotifications->count() }} belum dibaca</p>
+            <p class="page-subtitle">{{ auth()->user()->unreadNotifications->count() }} belum dibaca</p>
         </div>
         <div class="flex gap-2">
             <button wire:click="markAllRead" class="btn-secondary">Tandai Semua Dibaca</button>
@@ -11,7 +11,7 @@
 
     <div class="card mb-4 p-4 flex items-center gap-4">
         <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
-            <input wire:model.live="belum dibacaOnly" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-stone-600 focus:ring-stone-500">
+            <input wire:model.live="unreadOnly" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-stone-600 focus:ring-stone-500">
             Tampilkan belum dibaca saja
         </label>
     </div>

@@ -91,11 +91,18 @@ class Invoice extends Model
         $due    = $this->due_date->locale('id')->translatedFormat('d F Y');
         $pdfUrl = \URL::temporarySignedRoute('invoice.pdf.public', now()->addDays(7), ['invoice' => $this->id]);
 
+        $itemList = $this->items->map(fn($item) => "- *{$item->description}*")->implode("\n");
+
         $text = "Halo {$name},\n\n"
             . "Berikut kami sampaikan invoice dari *Reconext Digital Kreasi*:\n\n"
-            . "📄 *No. Invoice:* {$this->invoice_number}\n"
-            . "💰 *Jumlah:* {$amount}\n"
-            . "📅 *Jatuh Tempo:* {$due}\n\n"
+            . "- *No. Invoice:* {$this->invoice_number}\n";
+
+        if ($itemList) {
+            $text .= "{$itemList}\n";
+        }
+
+        $text .= "- *Jumlah:* {$amount}\n"
+            . "- *Jatuh Tempo:* {$due}\n\n"
             . "Silakan unduh PDF invoice di tautan berikut (berlaku 7 hari):\n"
             . "{$pdfUrl}\n\n"
             . "Mohon melakukan pembayaran sebelum tanggal jatuh tempo.\n"

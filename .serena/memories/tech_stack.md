@@ -1,0 +1,11 @@
+- PHP ^8.3, Laravel ^13.8, Livewire ^4.3 (note: NOT v3 — API differs from most Livewire tutorials/docs found online; AlpineJS is bundled inside Livewire 4, but project also lists `alpinejs` ^3.15 directly in package.json).
+- Tailwind CSS ^4.3 via `@tailwindcss/vite` — v4 custom-utility syntax (`@utility`), NOT v3's `@layer components`/`@apply`.
+- Vite ^8 + `laravel-vite-plugin` for asset bundling. `tom-select` for enhanced selects.
+- Auth: session (web, via custom `AuthController`, not Breeze/Jetstream) + `laravel/sanctum` ^4.3 (mobile API, token-based).
+- `spatie/laravel-permission` ^8.0 for roles (admin/technician).
+- `barryvdh/laravel-dompdf` ^3.1 — PDF generation (invoices/quotations/reports); DomPDF can't do flexbox/grid, so PDF blade views use `position:fixed` overlays + tables for layout.
+- `maatwebsite/excel` ^3.1 — exports.
+- `simplesoftwareio/simple-qrcode` ^4.2.
+- `kreait/laravel-firebase` ^7.2 — push notifications to the mobile app (via `App\Services\FcmService` + `App\Notifications\Channels\FcmChannel`).
+- DB: MySQL in dev (per prior session notes, db `rsms`), but `database/database.sqlite` also present or as a fallback.
+- Dev orchestration: `composer dev` runs `php artisan serve` + `queue:listen` + `pail` (log viewer) + `vite` concurrently (see `mem:suggested_commands`).

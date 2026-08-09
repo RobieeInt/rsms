@@ -95,11 +95,18 @@ class Quotation extends Model
         $pdfUrl = $this->getPublicPdfUrl();
         $approvalUrl = $this->getApprovalUrl();
 
+        $itemList = $this->items->map(fn($item) => "- *{$item->description}*")->implode("\n");
+
         $text = "Halo {$name},\n\n"
             . "Berikut kami sampaikan penawaran dari *Reconext Digital Kreasi*:\n\n"
-            . "📄 *No. Quotation:* {$this->quotation_number}\n"
-            . "💰 *Nilai:* {$amount}\n"
-            . "📅 *Berlaku hingga:* {$this->expiry_date->locale('id')->translatedFormat('d F Y')}\n\n"
+            . "- *No. Quotation:* {$this->quotation_number}\n";
+
+        if ($itemList) {
+            $text .= "{$itemList}\n";
+        }
+
+        $text .= "- *Nilai:* {$amount}\n"
+            . "- *Berlaku hingga:* {$this->expiry_date->locale('id')->translatedFormat('d F Y')}\n\n"
             . "Silakan unduh PDF penawaran di tautan berikut (berlaku 30 hari):\n"
             . "{$pdfUrl}\n\n"
             . "Untuk menyetujui atau menolak penawaran, silakan klik tautan berikut:\n"

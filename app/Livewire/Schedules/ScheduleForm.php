@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\ScheduleCreatedNotification;
+use App\Notifications\ScheduleUpdatedNotification;
 use App\Notifications\TechnicianScheduleNotification;
 use Livewire\Component;
 
@@ -57,6 +58,12 @@ class ScheduleForm extends Component
 
         if ($this->schedule && $this->schedule->exists) {
             $this->schedule->update($data);
+            $this->schedule->load(['client', 'technician']);
+
+            // Email ke klien saat jadwal diperbarui
+            if ($this->schedule->client->pic_email) {
+                $this->schedule->client->notifyNow(new ScheduleUpdatedNotification($this->schedule));
+            }
         } else {
             $schedule = Schedule::create($data);
             $schedule->load(['client', 'technician']);
