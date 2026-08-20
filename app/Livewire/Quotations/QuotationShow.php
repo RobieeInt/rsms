@@ -11,6 +11,11 @@ class QuotationShow extends Component
 {
     public Quotation $quotation;
 
+    public bool $showInvoiceModal = false;
+    public string $newInvoiceAmount = '';
+    public string $newInvoiceDescription = '';
+    public bool $newInvoiceSendImmediately = false;
+
     public function mount(Quotation $quotation): void
     {
         $this->quotation = $quotation;
@@ -23,21 +28,48 @@ class QuotationShow extends Component
         $this->dispatch('notify', message: 'Quotation sent to client.', type: 'success');
     }
 
-    public function convertToInvoice(): void
+    public function openInvoiceModal(): void
     {
-        if ($this->quotation->status !== 'approved') {
-            $this->dispatch('notify', message: 'Only approved quotations can be converted.', type: 'error');
+        $this->resetErrorBag();
+        $this->newInvoiceAmount = number_format($this->quotation->remainingBalance(), 2, '.', '');
+        $this->newInvoiceDescription = '';
+        $this->newInvoiceSendImmediately = false;
+        $this->showInvoiceModal = true;
+    }
+
+    public function createInvoice(): void
+    {
+        $this->validate([
+            'newInvoiceAmount' => ['required', 'numeric', 'min:0.01'],
+            'newInvoiceDescription' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $remaining = $this->quotation->remainingBalance();
+
+        if ((float) $this->newInvoiceAmount > $remaining + 0.01) {
+            $this->addError('newInvoiceAmount', 'Jumlah melebihi sisa saldo penawaran (Rp ' . number_format($remaining, 0, ',', '.') . ').');
             return;
         }
 
-        $invoice = app(InvoiceService::class)->createFromQuotation($this->quotation, auth()->id());
-        session()->flash('success', 'Invoice created from quotation.');
+        $invoice = app(InvoiceService::class)->createInstallmentFromQuotation(
+            $this->quotation,
+            auth()->id(),
+            (float) $this->newInvoiceAmount,
+            $this->newInvoiceDescription ?: null
+        );
+
+        if ($this->newInvoiceSendImmediately) {
+            app(InvoiceService::class)->markAsSent($invoice);
+        }
+
+        $this->showInvoiceModal = false;
+        session()->flash('success', 'Invoice termin berhasil dibuat.');
         $this->redirect(route('invoices.show', $invoice));
     }
 
     public function render()
     {
-        $this->quotation->load(['client', 'creator', 'items', 'invoice']);
+        $this->quotation->load(['client', 'creator', 'items', 'invoices']);
 
         return view('livewire.quotations.quotation-show')
             ->layout('layouts.app', ['title' => $this->quotation->quotation_number]);

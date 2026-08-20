@@ -95,6 +95,43 @@
                 <span class="{{ $statusClasses[$schedule->status] ?? 'badge-gray' }} text-sm px-3 py-1">{{ ucfirst(str_replace('_', ' ', $schedule->status)) }}</span>
             </div>
 
+            {{-- Send Log --}}
+            <div class="card p-5">
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Riwayat Pengiriman
+                </h3>
+                @if($schedule->sendLogs->isEmpty())
+                <p class="text-sm text-slate-400 dark:text-slate-500 italic">Belum ada email yang dikirim.</p>
+                @else
+                <ul class="space-y-2">
+                    @foreach($schedule->sendLogs as $log)
+                    @php
+                        $typeColor = $log->status === 'failed' ? 'text-red-500' : 'text-emerald-500';
+                    @endphp
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-current {{ $typeColor }} shrink-0 mt-1.5"></span>
+                        <div class="min-w-0">
+                            <span class="font-medium text-slate-700 dark:text-slate-300">{{ $log->typeLabel() }}</span>
+                            @if($log->status === 'failed')
+                            <span class="{{ $typeColor }} font-medium"> — Gagal terkirim</span>
+                            @endif
+                            @if($log->sent_to)
+                            <span class="text-slate-400"> → {{ $log->sent_to }}</span>
+                            @endif
+                            <div class="text-slate-400 dark:text-slate-500 mt-0.5">
+                                {{ $log->sent_at->locale('id')->translatedFormat('d M Y, H:i') }}
+                            </div>
+                            @if($log->status === 'failed' && $log->error_message)
+                            <div class="text-red-400 mt-0.5 break-words">{{ $log->error_message }}</div>
+                            @endif
+                        </div>
+                    </li>
+                    @endforeach
+                </ul>
+                @endif
+            </div>
+
             {{-- Actions --}}
             @php
                 $isOwner = auth()->user()->hasRole('admin') || (int) auth()->id() === (int) $schedule->technician_id;

@@ -12,7 +12,7 @@ class Invoice extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'client_id', 'quotation_id', 'created_by', 'invoice_number', 'type',
+        'client_id', 'quotation_id', 'installment_number', 'created_by', 'invoice_number', 'type',
         'invoice_date', 'due_date', 'subtotal', 'tax_percent', 'tax_amount',
         'discount_amount', 'total_amount', 'notes', 'status',
         'payment_date', 'payment_method', 'payment_proof', 'payment_notes',
@@ -78,6 +78,15 @@ class Invoice extends Model
         return $this->status !== 'paid' && $this->due_date->isPast();
     }
 
+    public function getPublicPdfUrl(): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'invoice.pdf.public',
+            now()->addDays(7),
+            ['invoice' => $this->id]
+        );
+    }
+
     public function getWhatsappUrl(): ?string
     {
         $phone = $this->client->pic_phone ?? null;
@@ -95,7 +104,7 @@ class Invoice extends Model
         $name   = $this->client->pic_name ?? 'Bapak/Ibu';
         $amount = 'Rp ' . number_format($this->total_amount, 0, ',', '.');
         $due    = $this->due_date->locale('id')->translatedFormat('d F Y');
-        $pdfUrl = \URL::temporarySignedRoute('invoice.pdf.public', now()->addDays(7), ['invoice' => $this->id]);
+        $pdfUrl = $this->getPublicPdfUrl();
 
         $itemList = $this->items->map(fn($item) => "- *{$item->description}*")->implode("\n");
 

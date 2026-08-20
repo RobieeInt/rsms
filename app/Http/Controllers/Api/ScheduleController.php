@@ -82,12 +82,18 @@ class ScheduleController extends Controller
         try {
             $technician = User::find($validated['technician_id']);
             $technician->notifyNow(new TechnicianScheduleNotification($schedule));
-
-            if ($schedule->client && $schedule->client->pic_email) {
-                $schedule->client->notifyNow(new ScheduleCreatedNotification($schedule));
-            }
         } catch (Throwable $e) {
-            Log::warning('Gagal mengirim notifikasi jadwal baru: '.$e->getMessage());
+            Log::warning('Gagal mengirim notifikasi jadwal baru ke teknisi: '.$e->getMessage());
+        }
+
+        if ($schedule->client && $schedule->client->pic_email) {
+            try {
+                $schedule->client->notifyNow(new ScheduleCreatedNotification($schedule));
+                $schedule->logSend('created', $schedule->client->pic_email);
+            } catch (Throwable $e) {
+                $schedule->logSend('created', $schedule->client->pic_email, 'failed', $e->getMessage());
+                Log::warning('Gagal mengirim notifikasi jadwal baru ke klien: '.$e->getMessage());
+            }
         }
 
         return response()->json([
@@ -125,19 +131,25 @@ class ScheduleController extends Controller
 
         // Notifications are best-effort: a mail/SMTP outage must not make an
         // otherwise-successful schedule update look like it failed.
-        try {
-            if ($schedule->client && $schedule->client->pic_email) {
+        if ($schedule->client && $schedule->client->pic_email) {
+            try {
                 $schedule->client->notifyNow(new ScheduleUpdatedNotification($schedule));
+                $schedule->logSend('updated', $schedule->client->pic_email);
+            } catch (Throwable $e) {
+                $schedule->logSend('updated', $schedule->client->pic_email, 'failed', $e->getMessage());
+                Log::warning('Gagal mengirim notifikasi jadwal diperbarui ke klien: '.$e->getMessage());
             }
+        }
 
-            // Reassignment: both the outgoing and incoming technician need
-            // to know — neither previously got notified of this at all.
-            if ($previousTechnicianId !== $schedule->technician_id) {
+        // Reassignment: both the outgoing and incoming technician need
+        // to know — neither previously got notified of this at all.
+        if ($previousTechnicianId !== $schedule->technician_id) {
+            try {
                 User::find($previousTechnicianId)?->notifyNow(new TechnicianScheduleNotification($schedule, 'cancelled'));
                 $schedule->technician->notifyNow(new TechnicianScheduleNotification($schedule, 'reassigned'));
+            } catch (Throwable $e) {
+                Log::warning('Gagal mengirim notifikasi reassignment ke teknisi: '.$e->getMessage());
             }
-        } catch (Throwable $e) {
-            Log::warning('Gagal mengirim notifikasi jadwal diperbarui: '.$e->getMessage());
         }
 
         return response()->json([

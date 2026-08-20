@@ -42,11 +42,17 @@ class InvoiceGeneratedNotification extends Notification
         $filename = $invoice->invoice_number . '.pdf';
         $pdfOutput = app(PdfService::class)->generateInvoice($invoice)->output();
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject('Invoice ' . $invoice->invoice_number . ' — Reconext Digital Kreasi')
             ->greeting('Yth. ' . ($notifiable->pic_name ?? 'Bapak/Ibu') . ',')
             ->line('Berikut kami sampaikan invoice dari **Reconext Digital Kreasi**.')
-            ->line('**No. Invoice:** ' . $invoice->invoice_number)
+            ->line('**No. Invoice:** ' . $invoice->invoice_number);
+
+        if ($invoice->installment_number) {
+            $mail->line('**Termin ke-:** ' . $invoice->installment_number);
+        }
+
+        return $mail
             ->line('**Keterangan:** ' . $desc)
             ->line('**Jumlah:** ' . $amount)
             ->line('**Jatuh Tempo:** ' . $due)

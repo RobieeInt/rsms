@@ -41,4 +41,20 @@ class Schedule extends Model
     {
         return $this->hasOne(VisitReport::class);
     }
+
+    public function sendLogs()
+    {
+        return $this->hasMany(ScheduleSendLog::class)->orderByDesc('sent_at');
+    }
+
+    public function logSend(string $type, ?string $sentTo, string $status = 'sent', ?string $errorMessage = null, string $channel = 'email'): void
+    {
+        $this->sendLogs()->create([
+            'type' => $type,
+            'sent_to' => $sentTo,
+            'channel' => $channel,
+            'status' => $status,
+            'error_message' => $errorMessage,
+        ]);
+    }
 }

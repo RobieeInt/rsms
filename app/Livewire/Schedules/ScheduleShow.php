@@ -8,8 +8,10 @@ use App\Notifications\AdminAlertNotification;
 use App\Notifications\ScheduleCancelledNotification;
 use App\Notifications\TechnicianScheduleNotification;
 use App\Services\ReportService;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Throwable;
 
 class ScheduleShow extends Component
 {
@@ -103,15 +105,26 @@ class ScheduleShow extends Component
         $this->dispatch('notify', message: 'Schedule cancelled.', type: 'warning');
         $this->schedule->refresh();
 
-        $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
+        try {
+            $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
+        } catch (Throwable $e) {
+            Log::warning('Gagal mengirim notifikasi pembatalan ke teknisi: '.$e->getMessage());
+        }
+
         if ($this->schedule->client->pic_email) {
-            $this->schedule->client->notifyNow(new ScheduleCancelledNotification($this->schedule));
+            try {
+                $this->schedule->client->notifyNow(new ScheduleCancelledNotification($this->schedule));
+                $this->schedule->logSend('cancelled', $this->schedule->client->pic_email);
+            } catch (Throwable $e) {
+                $this->schedule->logSend('cancelled', $this->schedule->client->pic_email, 'failed', $e->getMessage());
+                Log::warning('Gagal mengirim notifikasi pembatalan ke klien: '.$e->getMessage());
+            }
         }
     }
 
     public function render()
     {
-        $this->schedule->load(['client', 'technician', 'visitReport']);
+        $this->schedule->load(['client', 'technician', 'visitReport', 'sendLogs']);
 
         return view('livewire.schedules.schedule-show')
             ->layout('layouts.app', ['title' => 'Schedule Detail']);

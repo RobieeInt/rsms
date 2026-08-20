@@ -45,9 +45,22 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class)->orderBy('sort_order');
     }
 
-    public function invoice()
+    public function invoices()
     {
-        return $this->hasOne(Invoice::class);
+        return $this->hasMany(Invoice::class)->orderBy('created_at');
+    }
+
+    /** Sum of total_amount for all non-cancelled invoices billed against this quotation. */
+    public function totalInvoiced(): float
+    {
+        $invoices = $this->relationLoaded('invoices') ? $this->invoices : $this->invoices()->get();
+
+        return (float) $invoices->where('status', '!=', 'cancelled')->sum(fn ($inv) => (float) $inv->total_amount);
+    }
+
+    public function remainingBalance(): float
+    {
+        return round((float) $this->total_amount - $this->totalInvoiced(), 2);
     }
 
     /** Internal cost documentation — never shown to the client. */

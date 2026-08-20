@@ -8,8 +8,10 @@
             @if(in_array($quotation->status, ['draft']))
             <button wire:click="send" class="btn-primary">Send to Client</button>
             @endif
-            @if($quotation->status === 'approved' && !$quotation->invoice)
-            <button wire:click="convertToInvoice" class="btn-success">Convert to Invoice</button>
+            @if($quotation->status === 'approved' && $quotation->remainingBalance() > 0)
+            <button wire:click="openInvoiceModal" class="btn-success">
+                {{ $quotation->invoices->isEmpty() ? 'Convert to Invoice' : 'Buat Invoice Termin Berikutnya' }}
+            </button>
             @endif
             @php $waUrl = $quotation->getWhatsappUrl(); @endphp
             @if($waUrl)
@@ -109,12 +111,27 @@
                 @endif
             </div>
 
-            @if($quotation->invoice)
+            @if($quotation->invoices->isNotEmpty())
             <div class="card p-5">
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Invoice</h3>
-                <a href="{{ route('invoices.show', $quotation->invoice) }}" class="text-sm text-stone-600 dark:text-stone-400 hover:underline">
-                    {{ $quotation->invoice->invoice_number }}
-                </a>
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Invoice / Termin</h3>
+                <div class="space-y-2 mb-3">
+                    @foreach($quotation->invoices as $inv)
+                    <a href="{{ route('invoices.show', $inv) }}" class="flex justify-between items-center text-sm p-2 -mx-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">
+                        <div>
+                            <div class="font-medium text-slate-900 dark:text-white">{{ $inv->invoice_number }}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">
+                                @if($inv->installment_number) Termin ke-{{ $inv->installment_number }} · @endif
+                                {{ ucfirst($inv->status) }}
+                            </div>
+                        </div>
+                        <div class="font-semibold text-slate-900 dark:text-white">Rp {{ number_format($inv->total_amount, 0, ',', '.') }}</div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-1 text-sm">
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Total Ditagih</span><span>Rp {{ number_format($quotation->totalInvoiced(), 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between font-semibold text-slate-900 dark:text-white"><span>Sisa Saldo</span><span>Rp {{ number_format($quotation->remainingBalance(), 0, ',', '.') }}</span></div>
+                </div>
             </div>
             @endif
 
@@ -125,4 +142,37 @@
             </div>
         </div>
     </div>
+
+    {{-- Create Invoice / Termin Modal --}}
+    @if($showInvoiceModal)
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="card p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Buat Invoice</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Sisa saldo penawaran: Rp {{ number_format($quotation->remainingBalance(), 0, ',', '.') }}</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Jumlah Invoice <span class="text-red-500">*</span></label>
+                    <input wire:model="newInvoiceAmount" type="number" step="0.01" min="0.01" class="form-input">
+                    @error('newInvoiceAmount')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="form-label">Deskripsi (Opsional)</label>
+                    <textarea wire:model="newInvoiceDescription" rows="2" class="form-input" placeholder="Contoh: Termin 1 - DP awal"></textarea>
+                    @error('newInvoiceDescription')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                </div>
+                <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input wire:model="newInvoiceSendImmediately" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-stone-600 focus:ring-stone-500">
+                    Kirim langsung ke email client sekarang
+                </label>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button wire:click="createInvoice" class="btn-success flex-1 justify-center" wire:loading.attr="disabled">
+                    <span wire:loading.remove>Buat Invoice</span>
+                    <span wire:loading>Processing...</span>
+                </button>
+                <button wire:click="$set('showInvoiceModal', false)" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

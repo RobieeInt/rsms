@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Notifications\ScheduleCreatedNotification;
 use App\Notifications\ScheduleUpdatedNotification;
 use App\Notifications\TechnicianScheduleNotification;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
+use Throwable;
 
 class ScheduleForm extends Component
 {
@@ -62,28 +64,50 @@ class ScheduleForm extends Component
             $this->schedule->update($data);
             $this->schedule->load(['client', 'technician']);
 
-            // Email ke klien saat jadwal diperbarui
+            // Email ke klien saat jadwal diperbarui — best-effort: SMTP outage
+            // must not make an otherwise-successful reschedule look like it failed.
             if ($this->schedule->client->pic_email) {
-                $this->schedule->client->notifyNow(new ScheduleUpdatedNotification($this->schedule));
+                try {
+                    $this->schedule->client->notifyNow(new ScheduleUpdatedNotification($this->schedule));
+                    $this->schedule->logSend('updated', $this->schedule->client->pic_email);
+                } catch (Throwable $e) {
+                    $this->schedule->logSend('updated', $this->schedule->client->pic_email, 'failed', $e->getMessage());
+                    Log::warning('Gagal mengirim notifikasi jadwal diperbarui ke klien: '.$e->getMessage());
+                }
             }
 
             // Reassignment: both the outgoing and incoming technician need
             // to know — neither previously got notified of this at all.
             if ($previousTechnicianId !== $this->schedule->technician_id) {
-                $previousTechnician = User::find($previousTechnicianId);
-                $previousTechnician?->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
-                $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'reassigned'));
+                try {
+                    $previousTechnician = User::find($previousTechnicianId);
+                    $previousTechnician?->notifyNow(new TechnicianScheduleNotification($this->schedule, 'cancelled'));
+                    $this->schedule->technician->notifyNow(new TechnicianScheduleNotification($this->schedule, 'reassigned'));
+                } catch (Throwable $e) {
+                    Log::warning('Gagal mengirim notifikasi reassignment ke teknisi: '.$e->getMessage());
+                }
             }
         } else {
             $schedule = Schedule::create($data);
             $schedule->load(['client', 'technician']);
 
             // Email ke teknisi
-            $schedule->technician->notifyNow(new TechnicianScheduleNotification($schedule, 'created'));
+            try {
+                $schedule->technician->notifyNow(new TechnicianScheduleNotification($schedule, 'created'));
+            } catch (Throwable $e) {
+                Log::warning('Gagal mengirim notifikasi jadwal baru ke teknisi: '.$e->getMessage());
+            }
 
-            // Email ke klien (notifikasi lama, sudah ada)
+            // Email ke klien — best-effort: SMTP outage must not make an
+            // otherwise-successful schedule creation look like it failed.
             if ($schedule->client->pic_email) {
-                $schedule->client->notifyNow(new ScheduleCreatedNotification($schedule));
+                try {
+                    $schedule->client->notifyNow(new ScheduleCreatedNotification($schedule));
+                    $schedule->logSend('created', $schedule->client->pic_email);
+                } catch (Throwable $e) {
+                    $schedule->logSend('created', $schedule->client->pic_email, 'failed', $e->getMessage());
+                    Log::warning('Gagal mengirim notifikasi jadwal baru ke klien: '.$e->getMessage());
+                }
             }
         }
 

@@ -12,7 +12,7 @@ class QuotationApprovalController extends Controller
 {
     public function show(string $token)
     {
-        $quotation = Quotation::with(['client', 'items', 'invoice'])
+        $quotation = Quotation::with(['client', 'items', 'invoices'])
             ->where('approval_token', $token)
             ->firstOrFail();
 
@@ -42,7 +42,7 @@ class QuotationApprovalController extends Controller
         $admins = User::role('admin')->get();
 
         if ($request->action === 'approved') {
-            if (! $quotation->invoice) {
+            if (! $quotation->invoices()->exists()) {
                 $invoice = $invoiceService->createFromQuotation($quotation, $admins->first()->id);
                 $invoiceService->markAsSent($invoice);
             }

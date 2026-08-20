@@ -144,14 +144,16 @@
             <div class="alert alert-success" style="margin-top: 20px;">
                 ✓ Quotation ini telah disetujui oleh <strong>{{ $quotation->approved_by_name }}</strong> pada {{ $quotation->approved_at->format('d F Y H:i') }}.
             </div>
-            @if($quotation->invoice)
+            @php $visibleInvoices = $quotation->invoices->where('status', '!=', 'cancelled'); @endphp
+            @if($visibleInvoices->count() === 1)
+            @php $onlyInvoice = $visibleInvoices->first(); @endphp
             <div style="margin-top: 16px; padding: 20px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
                 <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Invoice telah dibuat dan dikirim ke email Anda.</div>
-                <a href="{{ URL::temporarySignedRoute('invoice.pdf.public', now()->addDays(7), ['invoice' => $quotation->invoice->id]) }}"
+                <a href="{{ URL::temporarySignedRoute('invoice.pdf.public', now()->addDays(7), ['invoice' => $onlyInvoice->id]) }}"
                    target="_blank"
                    style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #1a1a1a; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Lihat Invoice {{ $quotation->invoice->invoice_number }}
+                    Lihat Invoice {{ $onlyInvoice->invoice_number }}
                 </a>
             </div>
             @endif

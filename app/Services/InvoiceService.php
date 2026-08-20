@@ -81,6 +81,58 @@ class InvoiceService
         });
     }
 
+    /**
+     * Creates one independent invoice for a partial (or full) slice of a
+     * quotation's remaining balance — used for installment/termin billing.
+     * Unlike createFromQuotation(), this does not copy the quotation's line
+     * items 1:1 (an arbitrary partial amount can't be meaningfully prorated
+     * across them), so it builds a single line item for the given amount.
+     * The caller is responsible for validating $amount against the
+     * quotation's remaining balance before calling this.
+     */
+    public function createInstallmentFromQuotation(
+        Quotation $quotation,
+        int $createdBy,
+        float $amount,
+        ?string $description = null
+    ): Invoice {
+        return DB::transaction(function () use ($quotation, $createdBy, $amount, $description) {
+            $installmentNumber = $quotation->invoices()->count() + 1;
+
+            $invoice = Invoice::create([
+                'client_id' => $quotation->client_id,
+                'quotation_id' => $quotation->id,
+                'installment_number' => $installmentNumber,
+                'created_by' => $createdBy,
+                'invoice_number' => Invoice::generateNumber(),
+                'type' => 'quotation',
+                'invoice_date' => now()->toDateString(),
+                'due_date' => now()->addDays($quotation->client->invoice_due_date)->toDateString(),
+                'subtotal' => $amount,
+                'tax_percent' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total_amount' => $amount,
+                'notes' => $description,
+                'status' => 'draft',
+            ]);
+
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'description' => $description
+                    ?: sprintf('Termin ke-%d — %s', $installmentNumber, $quotation->quotation_number),
+                'quantity' => 1,
+                'unit' => 'termin',
+                'unit_price' => $amount,
+                'discount_amount' => 0,
+                'total_price' => $amount,
+                'sort_order' => 0,
+            ]);
+
+            return $invoice;
+        });
+    }
+
     public function markAsSent(Invoice $invoice): void
     {
         $invoice->update(['status' => 'sent']);

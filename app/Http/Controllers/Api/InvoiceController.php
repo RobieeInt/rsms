@@ -194,6 +194,12 @@ class InvoiceController extends Controller
     {
         $this->authorize('delete', $invoice);
 
+        if ($invoice->status !== 'draft') {
+            return response()->json([
+                'message' => 'Hanya invoice berstatus draft yang bisa dihapus.',
+            ], 422);
+        }
+
         $invoice->delete();
 
         return response()->json([

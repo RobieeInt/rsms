@@ -224,6 +224,11 @@ html, body {
                         Dari Penawaran: {{ $invoice->quotation->quotation_number }}
                     </div>
                     @endif
+                    @if($invoice->installment_number)
+                    <div style="font-size:10px; color:#666; margin-top:3px; font-weight:600;">
+                        Termin ke-{{ $invoice->installment_number }}
+                    </div>
+                    @endif
                 </td>
                 <td style="width:8%;"></td>
                 <td style="width:46%; vertical-align:top;">

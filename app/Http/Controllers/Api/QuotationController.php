@@ -20,7 +20,7 @@ class QuotationController extends Controller
     {
         $this->authorize('viewAny', Quotation::class);
 
-        $query = Quotation::with('client');
+        $query = Quotation::with(['client', 'invoices']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -82,7 +82,7 @@ class QuotationController extends Controller
     {
         $this->authorize('view', $quotation);
 
-        $quotation->load(['client', 'creator', 'items', 'invoice']);
+        $quotation->load(['client', 'creator', 'items', 'invoices']);
 
         return new QuotationResource($quotation);
     }
@@ -192,13 +192,39 @@ class QuotationController extends Controller
             ], 422);
         }
 
-        if ($quotation->invoice) {
+        $remainingBalance = $quotation->remainingBalance();
+
+        if ($remainingBalance <= 0) {
             return response()->json([
-                'message' => 'Penawaran ini sudah memiliki invoice.',
+                'message' => 'Penawaran ini sudah ditagih penuh.',
             ], 422);
         }
 
-        $invoice = $invoiceService->createFromQuotation($quotation, $request->user()->id);
+        $validated = $request->validate([
+            'amount' => ['nullable', 'numeric', 'min:0.01'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'send_immediately' => ['nullable', 'boolean'],
+        ]);
+
+        $amount = $validated['amount'] ?? $remainingBalance;
+
+        if ($amount > $remainingBalance + 0.01) {
+            return response()->json([
+                'message' => 'Jumlah invoice melebihi sisa saldo penawaran (Rp '
+                    . number_format($remainingBalance, 0, ',', '.') . ').',
+            ], 422);
+        }
+
+        $invoice = $invoiceService->createInstallmentFromQuotation(
+            $quotation,
+            $request->user()->id,
+            $amount,
+            $validated['description'] ?? null
+        );
+
+        if ($validated['send_immediately'] ?? false) {
+            $invoiceService->markAsSent($invoice);
+        }
 
         return response()->json([
             'message' => 'Invoice berhasil dibuat dari penawaran.',

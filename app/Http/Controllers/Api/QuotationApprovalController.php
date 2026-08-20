@@ -37,7 +37,7 @@ class QuotationApprovalController extends Controller
         $admins = User::role('admin')->get();
 
         if ($validated['action'] === 'approved') {
-            if (! $quotation->invoice) {
+            if (! $quotation->invoices()->exists()) {
                 $invoice = $invoiceService->createFromQuotation($quotation, $admins->first()->id);
                 try {
                     $invoiceService->markAsSent($invoice);

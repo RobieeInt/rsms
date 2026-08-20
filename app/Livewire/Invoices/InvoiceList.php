@@ -113,7 +113,15 @@ class InvoiceList extends Component
 
     public function deleteInvoice(): void
     {
-        Invoice::findOrFail($this->deleteId)->delete();
+        $invoice = Invoice::findOrFail($this->deleteId);
+
+        if ($invoice->status !== 'draft') {
+            $this->deleteId = null;
+            $this->dispatch('notify', message: 'Hanya invoice berstatus draft yang bisa dihapus.', type: 'danger');
+            return;
+        }
+
+        $invoice->delete();
         $this->deleteId = null;
         $this->dispatch('notify', message: 'Invoice deleted.', type: 'success');
     }
