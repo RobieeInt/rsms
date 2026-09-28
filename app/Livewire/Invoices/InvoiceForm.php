@@ -5,6 +5,8 @@ namespace App\Livewire\Invoices;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Quotation;
+use App\Services\InvoiceService;
 use Livewire\Component;
 
 class InvoiceForm extends Component
@@ -22,6 +24,12 @@ class InvoiceForm extends Component
     public float $subtotal = 0;
     public float $tax_amount = 0;
     public float $total_amount = 0;
+
+    // Termin (type = quotation, create only): the invoice is billed as a
+    // slice of the selected quotation's remaining balance via InvoiceService.
+    public int $quotation_id = 0;
+    public string $termin_amount = '';
+    public string $termin_description = '';
 
     public function mount(?Invoice $invoice = null): void
     {
@@ -57,6 +65,71 @@ class InvoiceForm extends Component
         $this->recalculate();
     }
 
+    public function updatedType(): void
+    {
+        $this->resetErrorBag();
+        if ($this->type !== 'quotation') {
+            $this->quotation_id = 0;
+            $this->termin_amount = '';
+        }
+    }
+
+    public function updatedQuotationId(): void
+    {
+        $this->resetErrorBag();
+        $quotation = $this->selectedQuotation();
+        $this->termin_amount = $quotation ? number_format($quotation->remainingBalance(), 2, '.', '') : '';
+    }
+
+    private function selectedQuotation(): ?Quotation
+    {
+        return $this->quotation_id
+            ? Quotation::with(['client', 'invoices'])->where('status', 'approved')->find($this->quotation_id)
+            : null;
+    }
+
+    private function isTerminMode(): bool
+    {
+        return $this->type === 'quotation' && ! ($this->invoice && $this->invoice->exists);
+    }
+
+    private function saveTermin(): void
+    {
+        $this->validate([
+            'quotation_id' => 'required|integer|min:1',
+            'termin_amount' => 'required|numeric|min:0.01',
+            'termin_description' => 'nullable|string|max:500',
+        ], [
+            'quotation_id.min' => 'Pilih penawaran yang mau ditagih.',
+        ]);
+
+        $quotation = $this->selectedQuotation();
+        if (! $quotation) {
+            $this->addError('quotation_id', 'Penawaran tidak ditemukan atau belum disetujui.');
+            return;
+        }
+
+        $remaining = $quotation->remainingBalance();
+        if ($remaining <= 0) {
+            $this->addError('quotation_id', 'Penawaran ini sudah ditagih penuh.');
+            return;
+        }
+        if ((float) $this->termin_amount > $remaining + 0.01) {
+            $this->addError('termin_amount', 'Jumlah melebihi sisa saldo penawaran (Rp ' . number_format($remaining, 0, ',', '.') . ').');
+            return;
+        }
+
+        $invoice = app(InvoiceService::class)->createInstallmentFromQuotation(
+            $quotation,
+            auth()->id(),
+            (float) $this->termin_amount,
+            $this->termin_description ?: null
+        );
+
+        session()->flash('success', 'Invoice termin berhasil dibuat.');
+        $this->redirect(route('invoices.show', $invoice));
+    }
+
     public function addItem(): void
     {
         $this->items[] = ['description' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'cost_price' => null, 'total_price' => 0];
@@ -90,6 +163,11 @@ class InvoiceForm extends Component
 
     public function save(): void
     {
+        if ($this->isTerminMode()) {
+            $this->saveTermin();
+            return;
+        }
+
         $this->validate([
             'client_id' => 'required|exists:clients,id',
             'invoice_date' => 'required|date',
@@ -153,7 +231,15 @@ class InvoiceForm extends Component
         $isEdit = $this->invoice && $this->invoice->exists;
         $clients = Client::where('is_active', true)->orderBy('company_name')->get();
 
-        return view('livewire.invoices.invoice-form', compact('isEdit', 'clients'))
+        $terminMode = $this->isTerminMode();
+        $quotations = $terminMode
+            ? Quotation::with(['client', 'invoices'])->where('status', 'approved')->latest('date')->get()
+                ->filter(fn ($q) => $q->remainingBalance() > 0)
+            : collect();
+        $selectedQuotation = $terminMode ? $this->selectedQuotation() : null;
+        $linkedQuotation = $isEdit ? $this->invoice->quotation : null;
+
+        return view('livewire.invoices.invoice-form', compact('isEdit', 'clients', 'terminMode', 'quotations', 'selectedQuotation', 'linkedQuotation'))
             ->layout('layouts.app', ['title' => $isEdit ? 'Edit Invoice' : 'New Invoice']);
     }
 }

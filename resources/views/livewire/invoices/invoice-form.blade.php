@@ -9,6 +9,21 @@
     <form wire:submit="save" class="space-y-6">
         <div class="card p-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+                @if($terminMode)
+                <div class="col-span-2">
+                    <label class="form-label">Penawaran <span class="text-red-500">*</span></label>
+                    <select wire:model.live="quotation_id" class="form-select">
+                        <option value="0">Pilih penawaran...</option>
+                        @foreach($quotations as $q)
+                        <option value="{{ $q->id }}">{{ $q->quotation_number }} — {{ $q->client->company_name }} (sisa Rp {{ number_format($q->remainingBalance(), 0, ',', '.') }})</option>
+                        @endforeach
+                    </select>
+                    @error('quotation_id')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                    @if($quotations->isEmpty())
+                    <p class="mt-1 text-xs text-slate-500">Belum ada penawaran berstatus approved yang masih punya sisa tagihan.</p>
+                    @endif
+                </div>
+                @else
                 <div class="col-span-2">
                     <label class="form-label">Client <span class="text-red-500">*</span></label>
                     <select x-select wire:model="client_id" class="form-select">
@@ -19,15 +34,24 @@
                     </select>
                     @error('client_id')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
+                @endif
                 <div>
                     <label class="form-label">Type</label>
-                    <select wire:model="type" class="form-select">
+                    <select wire:model.live="type" class="form-select">
                         <option value="manual">Manual</option>
                         <option value="retainer">Retainer</option>
-                        <option value="quotation">From Quotation</option>
+                        <option value="quotation">From Quotation (Termin)</option>
                     </select>
                 </div>
-                <div></div>
+                <div>
+                    @if($linkedQuotation)
+                    <label class="form-label">Dari Penawaran</label>
+                    <a href="{{ route('quotations.show', $linkedQuotation) }}" class="block py-2 text-sm font-semibold text-stone-600 dark:text-stone-400 hover:underline">
+                        {{ $linkedQuotation->quotation_number }}@if($invoice->installment_number) · Termin ke-{{ $invoice->installment_number }}@endif
+                    </a>
+                    @endif
+                </div>
+                @unless($terminMode)
                 <div>
                     <label class="form-label">Invoice Date <span class="text-red-500">*</span></label>
                     <input wire:model="invoice_date" type="date" class="form-input">
@@ -36,9 +60,40 @@
                     <label class="form-label">Due Date <span class="text-red-500">*</span></label>
                     <input wire:model="due_date" type="date" class="form-input">
                 </div>
+                @endunless
             </div>
         </div>
 
+        @if($terminMode)
+        <div class="card p-6">
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-4">Termin</h3>
+            @if($selectedQuotation)
+            @php $billed = $selectedQuotation->invoices->where('status', '!=', 'cancelled'); @endphp
+            <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-5">
+                <div><dt class="text-slate-500 dark:text-slate-400">Client</dt><dd class="font-semibold mt-1">{{ $selectedQuotation->client->company_name }}</dd></div>
+                <div><dt class="text-slate-500 dark:text-slate-400">Total Penawaran</dt><dd class="font-semibold mt-1">Rp {{ number_format($selectedQuotation->total_amount, 0, ',', '.') }}</dd></div>
+                <div><dt class="text-slate-500 dark:text-slate-400">Sudah Ditagih ({{ $billed->count() }} termin)</dt><dd class="font-semibold mt-1">Rp {{ number_format($selectedQuotation->totalInvoiced(), 0, ',', '.') }}</dd></div>
+                <div><dt class="text-slate-500 dark:text-slate-400">Sisa</dt><dd class="font-semibold mt-1 text-stone-600 dark:text-stone-400">Rp {{ number_format($selectedQuotation->remainingBalance(), 0, ',', '.') }}</dd></div>
+            </dl>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                    <label class="form-label">Nominal Termin Ini <span class="text-red-500">*</span></label>
+                    <input wire:model="termin_amount" type="number" min="0" step="any" class="form-input text-right">
+                    @error('termin_amount')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                    <p class="mt-1 text-xs text-slate-500">Default-nya sisa saldo penuh — ubah kalau mau dicicil.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="form-label">Deskripsi</label>
+                    <input wire:model="termin_description" type="text" class="form-input" placeholder="Contoh: Termin 1 - DP 50%">
+                    @error('termin_description')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                    <p class="mt-1 text-xs text-slate-500">Kosongkan untuk pakai "Termin ke-N — {{ $selectedQuotation->quotation_number }}". Tanggal & jatuh tempo diisi otomatis dari setting client.</p>
+                </div>
+            </div>
+            @else
+            <p class="text-sm text-slate-500 dark:text-slate-400">Pilih penawaran dulu — nanti kelihatan total, yang sudah ditagih, dan sisa saldonya.</p>
+            @endif
+        </div>
+        @else
         <div class="card p-6">
             <h3 class="font-semibold text-slate-900 dark:text-white mb-4">Line Items</h3>
             <div class="overflow-x-auto">
@@ -134,10 +189,11 @@
             <label class="form-label">Notes</label>
             <textarea wire:model="notes" rows="3" class="form-input" placeholder="Payment instructions or notes..."></textarea>
         </div>
+        @endif
 
         <div class="flex gap-3">
             <button type="submit" class="btn-primary" wire:loading.attr="disabled">
-                <span wire:loading.remove>{{ $isEdit ? 'Update Invoice' : 'Create Invoice' }}</span>
+                <span wire:loading.remove>{{ $isEdit ? 'Update Invoice' : ($terminMode ? 'Buat Invoice Termin' : 'Create Invoice') }}</span>
                 <span wire:loading>Saving...</span>
             </button>
             <a href="{{ route('invoices.index') }}" class="btn-secondary">Cancel</a>

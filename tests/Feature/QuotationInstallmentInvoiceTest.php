@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Invoices\InvoiceForm;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceSendLog;
@@ -10,6 +11,7 @@ use App\Models\QuotationItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -223,5 +225,44 @@ class QuotationInstallmentInvoiceTest extends TestCase
         $this->assertEquals('quotation', $invoice->type);
         $this->assertEquals(5_000_000, (float) $invoice->total_amount);
         $this->assertNull($invoice->installment_number);
+    }
+
+    public function test_invoice_form_from_quotation_creates_installment(): void
+    {
+        $quotation = $this->makeApprovedQuotation();
+
+        Livewire::actingAs($this->admin)->test(InvoiceForm::class)
+            ->set('type', 'quotation')
+            ->set('quotation_id', $quotation->id)
+            ->assertSet('termin_amount', '10000000.00')
+            ->set('termin_amount', '4000000')
+            ->set('termin_description', 'Termin 1 - DP 40%')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $invoice = $quotation->invoices()->firstOrFail();
+        $this->assertEquals(1, $invoice->installment_number);
+        $this->assertEquals($quotation->client_id, $invoice->client_id);
+        $this->assertEquals(4_000_000, (float) $invoice->total_amount);
+        $this->assertEquals(6_000_000, $quotation->fresh()->remainingBalance());
+    }
+
+    public function test_invoice_form_from_quotation_rejects_amount_over_remaining(): void
+    {
+        $quotation = $this->makeApprovedQuotation();
+
+        Livewire::actingAs($this->admin)->test(InvoiceForm::class)
+            ->set('type', 'quotation')
+            ->set('quotation_id', $quotation->id)
+            ->set('termin_amount', '10000001')
+            ->call('save')
+            ->assertHasErrors('termin_amount');
+
+        Livewire::actingAs($this->admin)->test(InvoiceForm::class)
+            ->set('type', 'quotation')
+            ->call('save')
+            ->assertHasErrors('quotation_id');
+
+        $this->assertEquals(0, $quotation->invoices()->count());
     }
 }
