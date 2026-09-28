@@ -49,10 +49,13 @@ class InvoiceGeneratedNotification extends Notification
             ->line('**No. Invoice:** ' . $invoice->invoice_number);
 
         if ($invoice->installment_number) {
-            $mail->line('**Termin ke-:** ' . $invoice->installment_number);
-            if ($summary = $invoice->quotationSummary()) {
+            $summary = $invoice->quotationSummary();
+            $mail->line('**Termin ke-:** ' . $invoice->installment_number
+                . ($summary ? ' (' . \App\Models\Quotation::formatPercent($summary['this_percent']) . '% dari total proyek)' : ''));
+            if ($summary) {
                 $mail->line('**Total Proyek:** Rp ' . number_format($summary['quotation_total'], 0, ',', '.'));
-                $mail->line('**Sisa Pembayaran setelah invoice ini:** Rp ' . number_format($summary['remaining_after'], 0, ',', '.'));
+                $mail->line('**Sisa Pembayaran setelah invoice ini:** Rp ' . number_format($summary['remaining_after'], 0, ',', '.')
+                    . ' (' . \App\Models\Quotation::formatPercent($summary['remaining_after_percent']) . '%)');
             }
         }
 

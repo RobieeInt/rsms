@@ -225,8 +225,9 @@ html, body {
                     </div>
                     @endif
                     @if($invoice->installment_number)
+                    @php $pdfSummary = $invoice->quotationSummary(); @endphp
                     <div style="font-size:10px; color:#666; margin-top:3px; font-weight:600;">
-                        Termin ke-{{ $invoice->installment_number }}
+                        Termin ke-{{ $invoice->installment_number }}@if($pdfSummary) ({{ \App\Models\Quotation::formatPercent($pdfSummary['this_percent']) }}% dari total proyek)@endif
                     </div>
                     @endif
                 </td>
@@ -306,16 +307,18 @@ html, body {
                 <td style="font-size:10px; color:#666; padding:2px 14px;">Total Proyek ({{ $summary['quotation_number'] }})</td>
                 <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['quotation_total'], 0, ',', '.') }}</td>
             </tr>
+            @if($summary['billed_before'] > 0)
             <tr>
-                <td style="font-size:10px; color:#666; padding:2px 14px;">Sudah Ditagih Sebelumnya</td>
+                <td style="font-size:10px; color:#666; padding:2px 14px;">Sudah Ditagih Sebelumnya ({{ \App\Models\Quotation::formatPercent($summary['billed_before_percent']) }}%)</td>
                 <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['billed_before'], 0, ',', '.') }}</td>
             </tr>
+            @endif
             <tr>
-                <td style="font-size:10px; color:#666; padding:2px 14px;">Invoice Ini (Termin ke-{{ $invoice->installment_number }})</td>
+                <td style="font-size:10px; color:#666; padding:2px 14px;">Invoice Ini (Termin ke-{{ $invoice->installment_number }} &middot; {{ \App\Models\Quotation::formatPercent($summary['this_percent']) }}%)</td>
                 <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['this_invoice'], 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td style="font-size:11px; font-weight:bold; color:#1a1a1a; padding:4px 14px; border-top:1px solid #C8C0B4;">Sisa Pembayaran</td>
+                <td style="font-size:11px; font-weight:bold; color:#1a1a1a; padding:4px 14px; border-top:1px solid #C8C0B4;">Sisa Pembayaran ({{ \App\Models\Quotation::formatPercent($summary['remaining_after_percent']) }}%)</td>
                 <td style="font-size:11px; font-weight:bold; color:#1a1a1a; text-align:right; padding:4px 0; border-top:1px solid #C8C0B4;">{{ number_format($summary['remaining_after'], 0, ',', '.') }}</td>
             </tr>
         </table>

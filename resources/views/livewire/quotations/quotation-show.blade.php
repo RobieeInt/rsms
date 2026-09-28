@@ -150,7 +150,7 @@
                         <div>
                             <div class="font-medium text-slate-900 dark:text-white">{{ $inv->invoice_number }}</div>
                             <div class="text-xs text-slate-500 dark:text-slate-400">
-                                @if($inv->installment_number) Termin ke-{{ $inv->installment_number }} · @endif
+                                @if($inv->installment_number) Termin ke-{{ $inv->installment_number }}@if((float) $quotation->total_amount > 0) ({{ \App\Models\Quotation::formatPercent($inv->total_amount / $quotation->total_amount * 100) }}%)@endif · @endif
                                 {{ ucfirst($inv->status) }}
                             </div>
                         </div>

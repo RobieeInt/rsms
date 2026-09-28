@@ -380,13 +380,20 @@ class QuotationInstallmentInvoiceTest extends TestCase
             ->assertJsonPath('data.quotation_summary.billed_before', 3000000)
             ->assertJsonPath('data.quotation_summary.this_invoice', 2000000)
             ->assertJsonPath('data.quotation_summary.remaining_after', 5000000)
+            ->assertJsonPath('data.quotation_summary.this_percent', 20)
+            ->assertJsonPath('data.quotation_summary.billed_before_percent', 30)
+            ->assertJsonPath('data.quotation_summary.remaining_after_percent', 50)
             ->assertJsonPath('data.quotation_summary.paid_total', 3000000)
             ->assertJsonPath('data.quotation_summary.outstanding', 7000000);
 
         // Web detail & PDF render the block.
         $this->actingAs($this->admin)->get(route('invoices.show', $second))
-            ->assertOk()->assertSee('Sisa Setelah Invoice Ini');
+            ->assertOk()->assertSee('Sisa Setelah Invoice Ini')->assertSee('Termin ke-2 · 20%');
         $this->actingAs($this->admin)->get(route('pdf.invoice', $second))->assertOk();
-        $this->assertStringContainsString('Sisa Pembayaran', view('pdfs.invoice', ['invoice' => Invoice::with(['client', 'items', 'quotation'])->find($second), 'company' => \App\Models\CompanySetting::getSettings()])->render());
+        $company = \App\Models\CompanySetting::getSettings();
+        $firstPdf = view('pdfs.invoice', ['invoice' => Invoice::with(['client', 'items', 'quotation'])->find($first), 'company' => $company])->render();
+        $this->assertStringNotContainsString('Sudah Ditagih Sebelumnya', $firstPdf);
+        $this->assertStringContainsString('Sisa Pembayaran', $firstPdf);
+        $this->assertStringContainsString('Termin ke-2 (20% dari total proyek)', view('pdfs.invoice', ['invoice' => Invoice::with(['client', 'items', 'quotation'])->find($second), 'company' => \App\Models\CompanySetting::getSettings()])->render());
     }
 }

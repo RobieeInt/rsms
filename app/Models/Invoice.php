@@ -28,7 +28,7 @@ class Invoice extends Model
      * invoice lama nggak berubah walau termin berikutnya udah dibuat.
      * Null kalau bukan invoice termin (invoice penuh / manual / retainer).
      *
-     * @return array{quotation_number: string, quotation_total: float, billed_before: float, this_invoice: float, remaining_after: float, paid_total: float, outstanding: float}|null
+     * @return array{quotation_number: string, quotation_total: float, billed_before: float, this_invoice: float, remaining_after: float, this_percent: float, billed_before_percent: float, remaining_after_percent: float, paid_total: float, outstanding: float}|null
      */
     public function quotationSummary(): ?array
     {
@@ -43,12 +43,20 @@ class Invoice extends Model
         $thisInvoice = $this->status === 'cancelled' ? 0.0 : (float) $this->total_amount;
         $paidTotal = round((float) $siblings->where('status', 'paid')->sum(fn ($inv) => (float) $inv->total_amount), 2);
 
+        $pct = fn (float $amount) => $quotationTotal > 0 ? round($amount / $quotationTotal * 100, 2) : 0.0;
+        $remainingAfter = max(0, round($quotationTotal - $billedBefore - $thisInvoice, 2));
+
         return [
             'quotation_number' => $this->quotation->quotation_number,
             'quotation_total' => $quotationTotal,
             'billed_before' => $billedBefore,
             'this_invoice' => $thisInvoice,
-            'remaining_after' => max(0, round($quotationTotal - $billedBefore - $thisInvoice, 2)),
+            'remaining_after' => $remainingAfter,
+            // Persen dari total penawaran (nominal aktual, bukan skema — jadi
+            // termin yang diturunin/dinaikin tetap nampil sesuai kenyataan).
+            'this_percent' => $pct($thisInvoice),
+            'billed_before_percent' => $pct($billedBefore),
+            'remaining_after_percent' => $pct($remainingAfter),
             'paid_total' => $paidTotal,
             'outstanding' => max(0, round($quotationTotal - $paidTotal, 2)),
         ];
