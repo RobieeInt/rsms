@@ -137,6 +137,73 @@
             </div>
         </div>
 
+        {{-- Skema Pembayaran / Termin --}}
+        <div class="card p-6">
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Skema Pembayaran (Termin)</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kosongkan kalau dibayar penuh sekali. Kalau diisi, saat klien approve cuma termin pertama yang otomatis ditagih — termin berikutnya dibuat dari halaman penawaran dan nominalnya tetap bisa diubah.</p>
+                </div>
+                <button type="button" wire:click="addPaymentTerm" class="btn-secondary text-sm shrink-0">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Tambah Termin
+                </button>
+            </div>
+
+            @if(count($payment_terms))
+            @php $termsSum = collect($payment_terms)->sum(fn($t) => (float) ($t['percent'] ?: 0)); @endphp
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400 w-10">#</th>
+                        <th class="text-left py-2 font-medium text-slate-600 dark:text-slate-400">Nama Termin</th>
+                        <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-28 text-right">Persen</th>
+                        <th class="py-2 font-medium text-slate-600 dark:text-slate-400 w-40 text-right">Nominal</th>
+                        <th class="w-10"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($payment_terms as $i => $term)
+                    <tr class="border-b border-slate-100 dark:border-slate-700">
+                        <td class="py-2 text-slate-500">{{ $i + 1 }}</td>
+                        <td class="py-2 pr-3">
+                            <input wire:model="payment_terms.{{ $i }}.label" type="text" class="form-input py-1.5" placeholder="Contoh: DP, Progress 50%, Pelunasan">
+                            @error("payment_terms.$i.label")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                        </td>
+                        <td class="py-2 px-2">
+                            <div class="relative">
+                                <input wire:model.live.debounce.400ms="payment_terms.{{ $i }}.percent" type="number" min="0" max="100" step="any" class="form-input py-1.5 pr-7 text-right">
+                                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                            </div>
+                            @error("payment_terms.$i.percent")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                        </td>
+                        <td class="py-2 px-2 text-right font-semibold text-slate-900 dark:text-white">
+                            Rp {{ number_format($total_amount * (float) ($term['percent'] ?: 0) / 100, 0, ',', '.') }}
+                        </td>
+                        <td class="py-2 pl-2">
+                            <button type="button" wire:click="removePaymentTerm({{ $i }})" class="p-1 text-red-400 hover:text-red-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td></td>
+                        <td class="py-2 text-right font-medium text-slate-600 dark:text-slate-400">Total</td>
+                        <td class="py-2 px-2 text-right font-bold {{ abs($termsSum - 100) > 0.001 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-500' }}">{{ \App\Models\Quotation::formatPercent($termsSum) }}%</td>
+                        <td class="py-2 px-2 text-right font-bold text-slate-900 dark:text-white">Rp {{ number_format($total_amount * $termsSum / 100, 0, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            @error('payment_terms')<p class="mt-2 text-sm text-red-500">{{ $message }}</p>@enderror
+            @else
+            <p class="text-sm text-slate-500 dark:text-slate-400">Belum ada termin — penawaran ini akan ditagih penuh dalam 1 invoice.</p>
+            @endif
+        </div>
+
         <div class="card p-6">
             <label class="form-label">Notes</label>
             <textarea wire:model="notes" rows="3" class="form-input" placeholder="Additional terms or notes..."></textarea>

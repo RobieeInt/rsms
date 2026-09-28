@@ -10,7 +10,8 @@
             @endif
             @if($quotation->status === 'approved' && $quotation->remainingBalance() > 0)
             <button wire:click="openInvoiceModal" class="btn-success">
-                {{ $quotation->invoices->isEmpty() ? 'Convert to Invoice' : 'Buat Invoice Termin Berikutnya' }}
+                @php $nextTerm = $quotation->nextTerm(); @endphp
+                {{ $quotation->invoices->isEmpty() ? 'Convert to Invoice' : ($nextTerm['label'] ? 'Tagih ' . $nextTerm['label'] : 'Buat Invoice Termin Berikutnya') }}
             </button>
             @endif
             @php $waUrl = $quotation->getWhatsappUrl(); @endphp
@@ -111,6 +112,35 @@
                 @endif
             </div>
 
+            @php $terms = $quotation->scheduledTerms(); $billed = $quotation->billedInvoices(); @endphp
+            @if(count($terms))
+            <div class="card p-5">
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Skema Pembayaran</h3>
+                <div class="space-y-2 text-sm">
+                    @foreach($terms as $i => $term)
+                    @php $inv = $billed[$i] ?? null; @endphp
+                    <div class="flex justify-between items-start gap-3">
+                        <div>
+                            <div class="font-medium text-slate-900 dark:text-white">{{ $i + 1 }}. {{ $term['label'] }} <span class="text-slate-500 font-normal">({{ \App\Models\Quotation::formatPercent($term['percent']) }}%)</span></div>
+                            <div class="text-xs {{ $inv ? ($inv->status === 'paid' ? 'text-emerald-600 dark:text-emerald-500' : 'text-blue-600 dark:text-blue-400') : 'text-slate-400' }}">
+                                @if($inv)
+                                    {{ $inv->status === 'paid' ? 'Lunas' : 'Ditagih' }} · {{ $inv->invoice_number }}
+                                    @if(abs((float) $inv->total_amount - $term['amount']) > 0.5) · Rp {{ number_format($inv->total_amount, 0, ',', '.') }} @endif
+                                @else
+                                    Belum ditagih
+                                @endif
+                            </div>
+                        </div>
+                        <div class="font-semibold text-slate-900 dark:text-white whitespace-nowrap">Rp {{ number_format($term['amount'], 0, ',', '.') }}</div>
+                    </div>
+                    @endforeach
+                </div>
+                @if($billed->count() > count($terms))
+                <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">+{{ $billed->count() - count($terms) }} invoice tambahan di luar skema.</p>
+                @endif
+            </div>
+            @endif
+
             @if($quotation->invoices->isNotEmpty())
             <div class="card p-5">
                 <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Invoice / Termin</h3>
@@ -150,14 +180,31 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Buat Invoice</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Sisa saldo penawaran: Rp {{ number_format($quotation->remainingBalance(), 0, ',', '.') }}</p>
             <div class="space-y-4">
-                <div>
-                    <label class="form-label">Jumlah Invoice <span class="text-red-500">*</span></label>
-                    <input wire:model="newInvoiceAmount" type="number" step="0.01" min="0.01" class="form-input">
-                    @error('newInvoiceAmount')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                @php $modalNext = $quotation->nextTerm(); @endphp
+                <div class="flex flex-wrap gap-2">
+                    @if($modalNext['scheduled'])
+                    <button type="button" wire:click="useScheduledTerm" class="btn-secondary py-1 px-2.5 text-xs">Sesuai skema: {{ $modalNext['label'] }}</button>
+                    @endif
+                    <button type="button" wire:click="payOffRemaining" class="btn-secondary py-1 px-2.5 text-xs">Lunasi sisa (Rp {{ number_format($quotation->remainingBalance(), 0, ',', '.') }})</button>
                 </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="form-label">Persen</label>
+                        <div class="relative">
+                            <input wire:model.live.debounce.400ms="newInvoicePercent" type="number" step="any" min="0" max="100" class="form-input pr-7 text-right">
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="form-label">Jumlah Invoice <span class="text-red-500">*</span></label>
+                        <input wire:model.live.debounce.400ms="newInvoiceAmount" type="number" step="any" min="0" class="form-input text-right">
+                    </div>
+                </div>
+                @error('newInvoiceAmount')<p class="text-xs text-red-500 -mt-2">{{ $message }}</p>@enderror
+                <p class="text-xs text-slate-500 dark:text-slate-400 -mt-2">Persen dihitung dari total penawaran. Bebas diubah kalau klien minta dicicil lebih kecil atau mau langsung lunas.</p>
                 <div>
                     <label class="form-label">Deskripsi (Opsional)</label>
-                    <textarea wire:model="newInvoiceDescription" rows="2" class="form-input" placeholder="Contoh: Termin 1 - DP awal"></textarea>
+                    <textarea wire:model="newInvoiceDescription" rows="2" class="form-input" placeholder="Contoh: Termin 2 - Progress (diturunkan jadi 20%)"></textarea>
                     @error('newInvoiceDescription')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">

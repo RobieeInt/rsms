@@ -16,13 +16,14 @@ class Quotation extends Model
     protected $fillable = [
         'client_id', 'created_by', 'quotation_number', 'date', 'expiry_date',
         'subtotal', 'tax_percent', 'tax_amount', 'discount_amount', 'total_amount',
-        'notes', 'status', 'approval_token', 'approved_at', 'approved_by_name', 'approval_notes',
+        'notes', 'payment_terms', 'status', 'approval_token', 'approved_at', 'approved_by_name', 'approval_notes',
     ];
 
     protected $casts = [
         'date' => 'date',
         'expiry_date' => 'date',
         'approved_at' => 'datetime',
+        'payment_terms' => 'array',
         'subtotal' => 'decimal:2',
         'tax_percent' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -63,6 +64,70 @@ class Quotation extends Model
         return round((float) $this->total_amount - $this->totalInvoiced(), 2);
     }
 
+    /** 30 -> "30", 33.5 -> "33,5" */
+    public static function formatPercent(float $percent): string
+    {
+        return rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',');
+    }
+
+    public function billedInvoices()
+    {
+        $invoices = $this->relationLoaded('invoices') ? $this->invoices : $this->invoices()->get();
+
+        return $invoices->where('status', '!=', 'cancelled')->values();
+    }
+
+    /**
+     * Agreed payment schedule, each term with its nominal computed from the
+     * quotation total. The last term absorbs rounding so the schedule always
+     * sums to exactly total_amount. Empty = pay in full at once.
+     *
+     * @return array<int, array{label: string, percent: float, amount: float}>
+     */
+    public function scheduledTerms(): array
+    {
+        $terms = array_values(array_filter($this->payment_terms ?? [], fn ($t) => (float) ($t['percent'] ?? 0) > 0));
+        $total = (float) $this->total_amount;
+        $allocated = 0.0;
+
+        foreach ($terms as $i => $term) {
+            $amount = $i === count($terms) - 1
+                ? round($total - $allocated, 2)
+                : round($total * (float) $term['percent'] / 100, 2);
+            $allocated += $amount;
+            $terms[$i] = [
+                'label' => trim((string) ($term['label'] ?? '')) ?: 'Termin ' . ($i + 1),
+                'percent' => (float) $term['percent'],
+                'amount' => $amount,
+            ];
+        }
+
+        return $terms;
+    }
+
+    /**
+     * What the next invoice should bill by default: the next term in the
+     * agreed schedule (capped at what's actually left, since earlier
+     * installments may have been billed higher/lower than agreed), or the
+     * full remaining balance when there's no schedule / it's used up.
+     *
+     * @return array{label: ?string, amount: float, number: int, scheduled: bool}
+     */
+    public function nextTerm(): array
+    {
+        $remaining = $this->remainingBalance();
+        $number = $this->billedInvoices()->count() + 1;
+        $term = $this->scheduledTerms()[$number - 1] ?? null;
+        $isLastScheduled = $term && $number === count($this->scheduledTerms());
+
+        return [
+            'label' => $term['label'] ?? null,
+            'amount' => max(0, $term && ! $isLastScheduled ? min($term['amount'], $remaining) : $remaining),
+            'number' => $number,
+            'scheduled' => (bool) $term,
+        ];
+    }
+
     /** Internal cost documentation — never shown to the client. */
     public function totalCost(): float
     {
@@ -73,8 +138,11 @@ class Quotation extends Model
     {
         $year = now()->format('Y');
         $month = now()->format('m');
-        $last = static::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
-        return 'QUO-' . $year . $month . '-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+        $prefix = 'QUO-' . $year . $month . '-';
+        // Include soft-deleted rows so a deleted quotation's number is never re-issued.
+        $last = static::withTrashed()->where('quotation_number', 'like', $prefix . '%')->max('quotation_number');
+        $seq = $last ? (int) substr($last, strlen($prefix)) : 0;
+        return $prefix . str_pad($seq + 1, 4, '0', STR_PAD_LEFT);
     }
 
     public static function generateToken(): string

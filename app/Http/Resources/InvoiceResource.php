@@ -15,6 +15,8 @@ class InvoiceResource extends JsonResource
             'client' => new ClientResource($this->whenLoaded('client')),
             'quotation_id' => $this->quotation_id,
             'installment_number' => $this->installment_number,
+            // Only on detail (quotation eager-loaded) — avoids N+1 on list endpoints.
+            'quotation_summary' => $this->when($this->relationLoaded('quotation'), fn () => $this->quotationSummary()),
             'created_by' => $this->created_by,
             'creator' => new UserResource($this->whenLoaded('creator')),
             'invoice_number' => $this->invoice_number,

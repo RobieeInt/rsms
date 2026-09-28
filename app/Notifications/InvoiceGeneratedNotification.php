@@ -50,6 +50,10 @@ class InvoiceGeneratedNotification extends Notification
 
         if ($invoice->installment_number) {
             $mail->line('**Termin ke-:** ' . $invoice->installment_number);
+            if ($summary = $invoice->quotationSummary()) {
+                $mail->line('**Total Proyek:** Rp ' . number_format($summary['quotation_total'], 0, ',', '.'));
+                $mail->line('**Sisa Pembayaran setelah invoice ini:** Rp ' . number_format($summary['remaining_after'], 0, ',', '.'));
+            }
         }
 
         return $mail

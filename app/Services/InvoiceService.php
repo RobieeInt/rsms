@@ -82,6 +82,29 @@ class InvoiceService
     }
 
     /**
+     * Invoice dibuat otomatis saat klien approve penawaran: kalau penawaran
+     * punya skema termin, cuma termin pertama yang ditagih; kalau nggak,
+     * invoice penuh (line item di-copy 1:1) seperti biasa.
+     */
+    public function createForApprovedQuotation(Quotation $quotation, int $createdBy): Invoice
+    {
+        $terms = $quotation->scheduledTerms();
+
+        if (count($terms) > 1) {
+            $first = $terms[0];
+
+            return $this->createInstallmentFromQuotation(
+                $quotation,
+                $createdBy,
+                $first['amount'],
+                sprintf('%s (%s%%) — %s', $first['label'], Quotation::formatPercent($first['percent']), $quotation->quotation_number)
+            );
+        }
+
+        return $this->createFromQuotation($quotation, $createdBy);
+    }
+
+    /**
      * Creates one independent invoice for a partial (or full) slice of a
      * quotation's remaining balance — used for installment/termin billing.
      * Unlike createFromQuotation(), this does not copy the quotation's line
@@ -97,7 +120,9 @@ class InvoiceService
         ?string $description = null
     ): Invoice {
         return DB::transaction(function () use ($quotation, $createdBy, $amount, $description) {
-            $installmentNumber = $quotation->invoices()->count() + 1;
+            // Cancelled invoices don't count as a termin (they're also excluded
+            // from remainingBalance()), so a re-issued termin keeps its number.
+            $installmentNumber = $quotation->invoices()->where('status', '!=', 'cancelled')->count() + 1;
 
             $invoice = Invoice::create([
                 'client_id' => $quotation->client_id,

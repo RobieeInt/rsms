@@ -43,7 +43,7 @@ class QuotationApprovalController extends Controller
 
         if ($request->action === 'approved') {
             if (! $quotation->invoices()->exists()) {
-                $invoice = $invoiceService->createFromQuotation($quotation, $admins->first()->id);
+                $invoice = $invoiceService->createForApprovedQuotation($quotation, $admins->first()->id);
                 $invoiceService->markAsSent($invoice);
             }
 

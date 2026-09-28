@@ -62,6 +62,7 @@ class QuotationController extends Controller
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.finding_id' => ['nullable', 'exists:findings,id'],
+            ...$this->paymentTermsRules(),
         ]);
 
         // Calculate item totals
@@ -106,6 +107,7 @@ class QuotationController extends Controller
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.finding_id' => ['nullable', 'exists:findings,id'],
+            ...$this->paymentTermsRules(),
         ]);
 
         DB::transaction(function () use ($validated, $quotation) {
@@ -206,7 +208,10 @@ class QuotationController extends Controller
             'send_immediately' => ['nullable', 'boolean'],
         ]);
 
-        $amount = $validated['amount'] ?? $remainingBalance;
+        // Tanpa amount → tagih termin berikutnya sesuai skema (atau sisa saldo).
+        $next = $quotation->nextTerm();
+        $amount = $validated['amount'] ?? $next['amount'];
+        $validated['description'] ??= $next['label'] ? $next['label'] . ' — ' . $quotation->quotation_number : null;
 
         if ($amount > $remainingBalance + 0.01) {
             return response()->json([
@@ -230,5 +235,22 @@ class QuotationController extends Controller
             'message' => 'Invoice berhasil dibuat dari penawaran.',
             'data' => new InvoiceResource($invoice->load(['client', 'items'])),
         ], 201);
+    }
+
+    /**
+     * payment_terms: [{label, percent}], total persen harus 100.
+     * Kirim [] atau null buat hapus skema (bayar penuh).
+     */
+    private function paymentTermsRules(): array
+    {
+        return [
+            'payment_terms' => ['sometimes', 'nullable', 'array', function ($attribute, $value, $fail) {
+                if (! empty($value) && abs(collect($value)->sum(fn ($t) => (float) ($t['percent'] ?? 0)) - 100) > 0.001) {
+                    $fail('Total persen termin harus 100%.');
+                }
+            }],
+            'payment_terms.*.label' => ['required', 'string', 'max:100'],
+            'payment_terms.*.percent' => ['required', 'numeric', 'min:0.01', 'max:100'],
+        ];
     }
 }

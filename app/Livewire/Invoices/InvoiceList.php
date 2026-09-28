@@ -115,9 +115,9 @@ class InvoiceList extends Component
     {
         $invoice = Invoice::findOrFail($this->deleteId);
 
-        if ($invoice->status !== 'draft') {
+        if ($invoice->isLocked()) {
             $this->deleteId = null;
-            $this->dispatch('notify', message: 'Hanya invoice berstatus draft yang bisa dihapus.', type: 'danger');
+            $this->dispatch('notify', message: 'Invoice yang sudah lunas tidak bisa dihapus.', type: 'danger');
             return;
         }
 

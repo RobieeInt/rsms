@@ -13,6 +13,7 @@ class QuotationShow extends Component
 
     public bool $showInvoiceModal = false;
     public string $newInvoiceAmount = '';
+    public string $newInvoicePercent = '';
     public string $newInvoiceDescription = '';
     public bool $newInvoiceSendImmediately = false;
 
@@ -31,10 +32,47 @@ class QuotationShow extends Component
     public function openInvoiceModal(): void
     {
         $this->resetErrorBag();
-        $this->newInvoiceAmount = number_format($this->quotation->remainingBalance(), 2, '.', '');
-        $this->newInvoiceDescription = '';
+        $this->useScheduledTerm();
         $this->newInvoiceSendImmediately = false;
         $this->showInvoiceModal = true;
+    }
+
+    /** Isi modal dengan termin berikutnya sesuai skema (atau sisa saldo kalau nggak ada skema). */
+    public function useScheduledTerm(): void
+    {
+        $next = $this->quotation->nextTerm();
+        $this->setInvoiceAmount($next['amount']);
+        $this->newInvoiceDescription = $next['label']
+            ? sprintf('%s — %s', $next['label'], $this->quotation->quotation_number)
+            : '';
+    }
+
+    public function payOffRemaining(): void
+    {
+        $this->setInvoiceAmount($this->quotation->remainingBalance());
+        $this->newInvoiceDescription = 'Pelunasan — ' . $this->quotation->quotation_number;
+    }
+
+    public function updatedNewInvoicePercent(): void
+    {
+        $total = (float) $this->quotation->total_amount;
+        if ($total > 0 && is_numeric($this->newInvoicePercent)) {
+            $this->newInvoiceAmount = number_format(round($total * (float) $this->newInvoicePercent / 100, 2), 2, '.', '');
+        }
+    }
+
+    public function updatedNewInvoiceAmount(): void
+    {
+        $total = (float) $this->quotation->total_amount;
+        if ($total > 0 && is_numeric($this->newInvoiceAmount)) {
+            $this->newInvoicePercent = (string) round((float) $this->newInvoiceAmount / $total * 100, 2);
+        }
+    }
+
+    private function setInvoiceAmount(float $amount): void
+    {
+        $this->newInvoiceAmount = number_format($amount, 2, '.', '');
+        $this->updatedNewInvoiceAmount();
     }
 
     public function createInvoice(): void

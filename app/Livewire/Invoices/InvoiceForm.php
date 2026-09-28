@@ -29,6 +29,7 @@ class InvoiceForm extends Component
     // slice of the selected quotation's remaining balance via InvoiceService.
     public int $quotation_id = 0;
     public string $termin_amount = '';
+    public string $termin_percent = '';
     public string $termin_description = '';
 
     public function mount(?Invoice $invoice = null): void
@@ -37,6 +38,7 @@ class InvoiceForm extends Component
         $this->due_date = now()->addDays(30)->format('Y-m-d');
 
         if ($invoice && $invoice->exists) {
+            abort_if($invoice->isLocked(), 403, 'Invoice yang sudah lunas tidak bisa diedit.');
             $this->invoice = $invoice;
             $this->client_id = $invoice->client_id;
             $this->type = $invoice->type;
@@ -70,15 +72,57 @@ class InvoiceForm extends Component
         $this->resetErrorBag();
         if ($this->type !== 'quotation') {
             $this->quotation_id = 0;
-            $this->termin_amount = '';
+            $this->termin_amount = $this->termin_percent = '';
         }
     }
 
     public function updatedQuotationId(): void
     {
         $this->resetErrorBag();
+        $this->useScheduledTerm();
+    }
+
+    /** Isi nominal dengan termin berikutnya sesuai skema penawaran (atau sisa saldo). */
+    public function useScheduledTerm(): void
+    {
         $quotation = $this->selectedQuotation();
-        $this->termin_amount = $quotation ? number_format($quotation->remainingBalance(), 2, '.', '') : '';
+        if (! $quotation) {
+            $this->termin_amount = $this->termin_percent = '';
+            return;
+        }
+        $next = $quotation->nextTerm();
+        $this->setTerminAmount($quotation, $next['amount']);
+        $this->termin_description = $next['label'] ? sprintf('%s — %s', $next['label'], $quotation->quotation_number) : '';
+    }
+
+    public function payOffRemaining(): void
+    {
+        if ($quotation = $this->selectedQuotation()) {
+            $this->setTerminAmount($quotation, $quotation->remainingBalance());
+            $this->termin_description = 'Pelunasan — ' . $quotation->quotation_number;
+        }
+    }
+
+    public function updatedTerminPercent(): void
+    {
+        $quotation = $this->selectedQuotation();
+        if ($quotation && (float) $quotation->total_amount > 0 && is_numeric($this->termin_percent)) {
+            $this->termin_amount = number_format(round((float) $quotation->total_amount * (float) $this->termin_percent / 100, 2), 2, '.', '');
+        }
+    }
+
+    public function updatedTerminAmount(): void
+    {
+        $quotation = $this->selectedQuotation();
+        if ($quotation && (float) $quotation->total_amount > 0 && is_numeric($this->termin_amount)) {
+            $this->termin_percent = (string) round((float) $this->termin_amount / (float) $quotation->total_amount * 100, 2);
+        }
+    }
+
+    private function setTerminAmount(Quotation $quotation, float $amount): void
+    {
+        $this->termin_amount = number_format($amount, 2, '.', '');
+        $this->updatedTerminAmount();
     }
 
     private function selectedQuotation(): ?Quotation

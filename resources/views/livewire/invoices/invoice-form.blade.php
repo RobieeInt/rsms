@@ -75,12 +75,39 @@
                 <div><dt class="text-slate-500 dark:text-slate-400">Sudah Ditagih ({{ $billed->count() }} termin)</dt><dd class="font-semibold mt-1">Rp {{ number_format($selectedQuotation->totalInvoiced(), 0, ',', '.') }}</dd></div>
                 <div><dt class="text-slate-500 dark:text-slate-400">Sisa</dt><dd class="font-semibold mt-1 text-stone-600 dark:text-stone-400">Rp {{ number_format($selectedQuotation->remainingBalance(), 0, ',', '.') }}</dd></div>
             </dl>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            @php $next = $selectedQuotation->nextTerm(); $terms = $selectedQuotation->scheduledTerms(); @endphp
+            @if(count($terms))
+            <div class="mb-5 text-sm">
+                <div class="text-slate-500 dark:text-slate-400 mb-1">Skema yang disepakati</div>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($terms as $i => $term)
+                    <span class="px-2.5 py-1 rounded-lg text-xs {{ $i < $billed->count() ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : ($i === $billed->count() ? 'bg-stone-100 text-stone-800 ring-1 ring-stone-300 dark:bg-stone-800 dark:text-stone-200 dark:ring-stone-600' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300') }}">
+                        {{ $i + 1 }}. {{ $term['label'] }} · {{ \App\Models\Quotation::formatPercent($term['percent']) }}%
+                    </span>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+            <div class="flex flex-wrap gap-2 mb-4">
+                @if($next['scheduled'])
+                <button type="button" wire:click="useScheduledTerm" class="btn-secondary py-1 px-2.5 text-xs">Sesuai skema: {{ $next['label'] }}</button>
+                @endif
+                <button type="button" wire:click="payOffRemaining" class="btn-secondary py-1 px-2.5 text-xs">Lunasi sisa</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div>
+                    <label class="form-label">Persen</label>
+                    <div class="relative">
+                        <input wire:model.live.debounce.400ms="termin_percent" type="number" min="0" max="100" step="any" class="form-input pr-7 text-right">
+                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">Dari total penawaran.</p>
+                </div>
                 <div>
                     <label class="form-label">Nominal Termin Ini <span class="text-red-500">*</span></label>
-                    <input wire:model="termin_amount" type="number" min="0" step="any" class="form-input text-right">
+                    <input wire:model.live.debounce.400ms="termin_amount" type="number" min="0" step="any" class="form-input text-right">
                     @error('termin_amount')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-                    <p class="mt-1 text-xs text-slate-500">Default-nya sisa saldo penuh — ubah kalau mau dicicil.</p>
+                    <p class="mt-1 text-xs text-slate-500">Bebas diubah — mau dicicil lebih kecil atau langsung lunas.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label class="form-label">Deskripsi</label>

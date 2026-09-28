@@ -11,6 +11,49 @@ class Invoice extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Invoice yang udah lunas dikunci (nggak bisa diedit/dihapus) biar
+     * laporan pembayaran nggak berubah. Selain itu (draft/sent/overdue)
+     * bebas diedit atau dihapus.
+     */
+    public function isLocked(): bool
+    {
+        return $this->status === 'paid';
+    }
+
+    /**
+     * Posisi invoice ini terhadap total penawarannya — buat nampilin sisa
+     * pembayaran di invoice termin. "Sebelumnya" = invoice lain (non-batal)
+     * dari penawaran yang sama yang dibuat sebelum invoice ini, jadi angka di
+     * invoice lama nggak berubah walau termin berikutnya udah dibuat.
+     * Null kalau bukan invoice termin (invoice penuh / manual / retainer).
+     *
+     * @return array{quotation_number: string, quotation_total: float, billed_before: float, this_invoice: float, remaining_after: float, paid_total: float, outstanding: float}|null
+     */
+    public function quotationSummary(): ?array
+    {
+        if (! $this->quotation_id || ! $this->installment_number || ! $this->quotation) {
+            return null;
+        }
+
+        $siblings = $this->quotation->billedInvoices();
+        $before = $siblings->filter(fn ($inv) => $inv->id < $this->id);
+        $quotationTotal = (float) $this->quotation->total_amount;
+        $billedBefore = round((float) $before->sum(fn ($inv) => (float) $inv->total_amount), 2);
+        $thisInvoice = $this->status === 'cancelled' ? 0.0 : (float) $this->total_amount;
+        $paidTotal = round((float) $siblings->where('status', 'paid')->sum(fn ($inv) => (float) $inv->total_amount), 2);
+
+        return [
+            'quotation_number' => $this->quotation->quotation_number,
+            'quotation_total' => $quotationTotal,
+            'billed_before' => $billedBefore,
+            'this_invoice' => $thisInvoice,
+            'remaining_after' => max(0, round($quotationTotal - $billedBefore - $thisInvoice, 2)),
+            'paid_total' => $paidTotal,
+            'outstanding' => max(0, round($quotationTotal - $paidTotal, 2)),
+        ];
+    }
+
     protected $fillable = [
         'client_id', 'quotation_id', 'installment_number', 'created_by', 'invoice_number', 'type',
         'invoice_date', 'due_date', 'subtotal', 'tax_percent', 'tax_amount',
@@ -69,8 +112,13 @@ class Invoice extends Model
     {
         $year = now()->format('Y');
         $month = now()->format('m');
-        $last = static::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
-        return 'INV-' . $year . $month . '-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+        $prefix = 'INV-' . $year . $month . '-';
+        // Include soft-deleted invoices: their numbers are still taken by the
+        // unique index, and counting only live rows re-issues a used number
+        // right after any invoice is deleted.
+        $last = static::withTrashed()->where('invoice_number', 'like', $prefix . '%')->max('invoice_number');
+        $seq = $last ? (int) substr($last, strlen($prefix)) : 0;
+        return $prefix . str_pad($seq + 1, 4, '0', STR_PAD_LEFT);
     }
 
     public function isOverdue(): bool

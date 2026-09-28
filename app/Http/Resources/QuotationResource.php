@@ -35,6 +35,8 @@ class QuotationResource extends JsonResource
             'invoices' => InvoiceResource::collection($this->whenLoaded('invoices')),
             'total_invoiced' => (float) $this->totalInvoiced(),
             'remaining_balance' => (float) $this->remainingBalance(),
+            'payment_terms' => $this->scheduledTerms(),
+            'next_term' => $this->nextTerm(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

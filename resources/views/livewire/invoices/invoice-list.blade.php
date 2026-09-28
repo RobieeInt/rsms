@@ -96,7 +96,9 @@
                                 @if(in_array($invoice->status, ['sent', 'overdue']))
                                 <button wire:click="markAsPaid({{ $invoice->id }})" class="btn-success py-1 px-2.5 text-xs">Lunas</button>
                                 @endif
+                                @unless($invoice->isLocked())
                                 <button wire:click="confirmDelete({{ $invoice->id }})" class="btn-danger py-1 px-2.5 text-xs">Hapus</button>
+                                @endunless
                             </div>
                         </td>
                     </tr>
@@ -161,7 +163,7 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div class="card p-6 w-full max-w-sm mx-4">
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Hapus Invoice</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Invoice ini akan dihapus permanen.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Invoice ini akan dihapus. Kalau sudah terkirim, klien tetap pegang email/PDF lamanya — kabari klien kalau invoice itu batal. Kalau ini invoice termin, nominalnya balik ke sisa saldo penawaran.</p>
             <div class="flex gap-3 justify-end">
                 <button wire:click="$set('deleteId', null)" class="btn-secondary">Batal</button>
                 <button wire:click="deleteInvoice" class="btn-danger">Hapus</button>

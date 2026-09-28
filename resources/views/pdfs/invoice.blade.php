@@ -300,6 +300,27 @@ html, body {
             </table>
         </div>
 
+        @if($summary = $invoice->quotationSummary())
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <tr>
+                <td style="font-size:10px; color:#666; padding:2px 14px;">Total Proyek ({{ $summary['quotation_number'] }})</td>
+                <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['quotation_total'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td style="font-size:10px; color:#666; padding:2px 14px;">Sudah Ditagih Sebelumnya</td>
+                <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['billed_before'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td style="font-size:10px; color:#666; padding:2px 14px;">Invoice Ini (Termin ke-{{ $invoice->installment_number }})</td>
+                <td style="font-size:10px; color:#666; text-align:right; padding:2px 0;">{{ number_format($summary['this_invoice'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td style="font-size:11px; font-weight:bold; color:#1a1a1a; padding:4px 14px; border-top:1px solid #C8C0B4;">Sisa Pembayaran</td>
+                <td style="font-size:11px; font-weight:bold; color:#1a1a1a; text-align:right; padding:4px 0; border-top:1px solid #C8C0B4;">{{ number_format($summary['remaining_after'], 0, ',', '.') }}</td>
+            </tr>
+        </table>
+        @endif
+
         @if($invoice->notes)
         <div style="margin: 10px 14px 0; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 10px; color: #555; line-height: 1.6;">
             {{ $invoice->notes }}

@@ -123,7 +123,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['client', 'creator', 'items', 'sendLogs']);
+        $invoice->load(['client', 'creator', 'items', 'sendLogs', 'quotation.invoices']);
 
         return new InvoiceResource($invoice);
     }
@@ -131,6 +131,12 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice): JsonResponse
     {
         $this->authorize('update', $invoice);
+
+        if ($invoice->isLocked()) {
+            return response()->json([
+                'message' => 'Invoice yang sudah lunas tidak bisa diedit.',
+            ], 422);
+        }
 
         $validated = $request->validate([
             'client_id' => ['sometimes', 'required', 'exists:clients,id'],
@@ -194,9 +200,9 @@ class InvoiceController extends Controller
     {
         $this->authorize('delete', $invoice);
 
-        if ($invoice->status !== 'draft') {
+        if ($invoice->isLocked()) {
             return response()->json([
-                'message' => 'Hanya invoice berstatus draft yang bisa dihapus.',
+                'message' => 'Invoice yang sudah lunas tidak bisa dihapus.',
             ], 422);
         }
 

@@ -24,6 +24,9 @@ class QuotationForm extends Component
     public float $tax_amount = 0;
     public float $total_amount = 0;
 
+    /** Skema pembayaran: [['label' => 'DP', 'percent' => 30], ...]. Kosong = bayar penuh. */
+    public array $payment_terms = [];
+
     public function mount(?Quotation $quotation = null): void
     {
         $this->date = now()->format('Y-m-d');
@@ -37,6 +40,9 @@ class QuotationForm extends Component
             $this->tax_percent = (float) $quotation->tax_percent;
             $this->discount_amount = (float) $quotation->discount_amount;
             $this->notes = $quotation->notes ?? '';
+            $this->payment_terms = collect($quotation->payment_terms ?? [])
+                ->map(fn ($t) => ['label' => (string) ($t['label'] ?? ''), 'percent' => (float) ($t['percent'] ?? 0)])
+                ->all();
             // cost_price is only ever loaded into this (public, browser-visible)
             // component state for admins — a technician must never see it even
             // via page source, not just have the input hidden.
@@ -91,6 +97,20 @@ class QuotationForm extends Component
         $this->items[] = ['description' => '', 'detail' => '', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 0, 'cost_price' => null, 'discount_amount' => 0, 'total_price' => 0];
     }
 
+    public function addPaymentTerm(): void
+    {
+        $used = collect($this->payment_terms)->sum(fn ($t) => (float) $t['percent']);
+        $this->payment_terms[] = [
+            'label' => empty($this->payment_terms) ? 'DP' : 'Termin ' . (count($this->payment_terms) + 1),
+            'percent' => max(0, round(100 - $used, 2)),
+        ];
+    }
+
+    public function removePaymentTerm(int $index): void
+    {
+        array_splice($this->payment_terms, $index, 1);
+    }
+
     public function removeItem(int $index): void
     {
         array_splice($this->items, $index, 1);
@@ -129,7 +149,24 @@ class QuotationForm extends Component
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
+            'payment_terms' => 'array',
+            'payment_terms.*.label' => 'required|string|max:100',
+            'payment_terms.*.percent' => 'required|numeric|min:0.01|max:100',
+        ], [
+            'payment_terms.*.label.required' => 'Nama termin wajib diisi.',
+            'payment_terms.*.percent.min' => 'Persen minimal 0,01.',
         ]);
+
+        if (! empty($this->payment_terms)) {
+            $sum = round(collect($this->payment_terms)->sum(fn ($t) => (float) $t['percent']), 2);
+            if (abs($sum - 100) > 0.001) {
+                $this->addError('payment_terms', 'Total persen termin harus 100% (sekarang ' . Quotation::formatPercent($sum) . '%).');
+                return;
+            }
+        }
+        $paymentTerms = empty($this->payment_terms) ? null : collect($this->payment_terms)
+            ->map(fn ($t) => ['label' => trim($t['label']), 'percent' => (float) $t['percent']])
+            ->values()->all();
 
         $this->recalculate();
 
@@ -156,6 +193,7 @@ class QuotationForm extends Component
                 'tax_percent' => $this->tax_percent,
                 'discount_amount' => $this->discount_amount,
                 'notes' => $this->notes,
+                'payment_terms' => $paymentTerms,
                 'subtotal' => $this->subtotal,
                 'tax_amount' => $this->tax_amount,
                 'total_amount' => $this->total_amount,
@@ -177,6 +215,7 @@ class QuotationForm extends Component
                 'tax_percent' => $this->tax_percent,
                 'discount_amount' => $this->discount_amount,
                 'notes' => $this->notes,
+                'payment_terms' => $paymentTerms,
                 'subtotal' => $this->subtotal,
                 'tax_amount' => $this->tax_amount,
                 'total_amount' => $this->total_amount,

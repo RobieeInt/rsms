@@ -163,19 +163,112 @@ class QuotationInstallmentInvoiceTest extends TestCase
         $this->assertEquals(1, InvoiceSendLog::where('invoice_id', $invoice->id)->count());
     }
 
-    public function test_cannot_delete_non_draft_invoice(): void
+    public function test_can_delete_sent_invoice_but_not_paid_invoice(): void
     {
         $quotation = $this->makeApprovedQuotation();
 
-        $create = $this->actingAs($this->admin)
-            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 3_000_000, 'send_immediately' => true]);
+        $sent = $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 3_000_000, 'send_immediately' => true])
+            ->json('data.id');
 
-        $invoiceId = $create->json('data.id');
+        $this->actingAs($this->admin)->deleteJson("/api/invoices/{$sent}")->assertOk();
+        $this->assertNull(Invoice::find($sent));
+        $this->assertEquals(10_000_000, $quotation->fresh()->remainingBalance());
 
-        $response = $this->actingAs($this->admin)->deleteJson("/api/invoices/{$invoiceId}");
+        $paid = $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 3_000_000])
+            ->json('data.id');
+        Invoice::whereKey($paid)->update(['status' => 'paid']);
 
-        $response->assertStatus(422);
-        $this->assertNotNull(Invoice::find($invoiceId));
+        $this->actingAs($this->admin)->deleteJson("/api/invoices/{$paid}")->assertStatus(422);
+        $this->actingAs($this->admin)->putJson("/api/invoices/{$paid}", ['notes' => 'x'])->assertStatus(422);
+        $this->assertNotNull(Invoice::find($paid));
+    }
+
+    public function test_approval_with_payment_terms_bills_only_first_term(): void
+    {
+        Notification::fake();
+
+        $quotation = $this->makeApprovedQuotation();
+        $quotation->update([
+            'status' => 'sent',
+            'payment_terms' => [
+                ['label' => 'DP', 'percent' => 30],
+                ['label' => 'Progress', 'percent' => 40],
+                ['label' => 'Pelunasan', 'percent' => 30],
+            ],
+        ]);
+
+        $this->postJson("/api/quotation/approve/{$quotation->approval_token}", [
+            'action' => 'approved',
+            'approved_by_name' => 'Budi',
+        ])->assertOk();
+
+        $quotation->refresh();
+        $this->assertEquals(1, $quotation->invoices()->count());
+        $invoice = $quotation->invoices()->first();
+        $this->assertEquals(1, $invoice->installment_number);
+        $this->assertEquals(3_000_000, (float) $invoice->total_amount);
+        $this->assertEquals('sent', $invoice->status);
+        $this->assertEquals(7_000_000, $quotation->remainingBalance());
+
+        // Termin berikutnya default ke skema (Progress 40%)...
+        $next = $quotation->nextTerm();
+        $this->assertSame('Progress', $next['label']);
+        $this->assertEquals(4_000_000, $next['amount']);
+
+        // ...tapi bisa diturunin sesuai kemampuan klien.
+        $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 2_000_000])
+            ->assertCreated()
+            ->assertJsonPath('data.installment_number', 2);
+
+        // Termin terakhir di skema selalu nagih sisa saldo penuh.
+        $next = $quotation->fresh()->nextTerm();
+        $this->assertSame('Pelunasan', $next['label']);
+        $this->assertEquals(5_000_000, $next['amount']);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", [])
+            ->assertCreated();
+        $this->assertEquals(0, $quotation->fresh()->remainingBalance());
+    }
+
+    public function test_quotation_form_rejects_terms_not_summing_to_100(): void
+    {
+        $quotation = $this->makeApprovedQuotation();
+        $quotation->update(['status' => 'draft']);
+
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Quotations\QuotationForm::class, ['quotation' => $quotation])
+            ->set('payment_terms', [['label' => 'DP', 'percent' => 30], ['label' => 'Pelunasan', 'percent' => 60]])
+            ->call('save')
+            ->assertHasErrors('payment_terms');
+
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Quotations\QuotationForm::class, ['quotation' => $quotation])
+            ->set('payment_terms', [['label' => 'DP', 'percent' => 30], ['label' => 'Pelunasan', 'percent' => 70]])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertCount(2, $quotation->fresh()->scheduledTerms());
+    }
+
+    public function test_quotation_show_modal_prefills_next_term_and_allows_payoff(): void
+    {
+        $quotation = $this->makeApprovedQuotation();
+        $quotation->update(['payment_terms' => [['label' => 'DP', 'percent' => 50], ['label' => 'Pelunasan', 'percent' => 50]]]);
+
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Quotations\QuotationShow::class, ['quotation' => $quotation])
+            ->call('openInvoiceModal')
+            ->assertSet('newInvoiceAmount', '5000000.00')
+            ->assertSet('newInvoicePercent', '50')
+            ->set('newInvoicePercent', '20')
+            ->assertSet('newInvoiceAmount', '2000000.00')
+            ->call('payOffRemaining')
+            ->assertSet('newInvoiceAmount', '10000000.00')
+            ->call('createInvoice')
+            ->assertHasNoErrors();
+
+        $this->assertEquals(0, $quotation->fresh()->remainingBalance());
     }
 
     public function test_public_approval_still_creates_single_full_invoice_unchanged(): void
@@ -264,5 +357,36 @@ class QuotationInstallmentInvoiceTest extends TestCase
             ->assertHasErrors('quotation_id');
 
         $this->assertEquals(0, $quotation->invoices()->count());
+    }
+
+    public function test_invoice_shows_remaining_balance_after_each_termin(): void
+    {
+        $quotation = $this->makeApprovedQuotation();
+
+        $first = $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 3_000_000])
+            ->json('data.id');
+        $second = $this->actingAs($this->admin)
+            ->postJson("/api/quotations/{$quotation->id}/convert-to-invoice", ['amount' => 2_000_000])
+            ->json('data.id');
+        Invoice::whereKey($first)->update(['status' => 'paid']);
+
+        $this->actingAs($this->admin)->getJson("/api/invoices/{$first}")
+            ->assertJsonPath('data.quotation_summary.billed_before', 0)
+            ->assertJsonPath('data.quotation_summary.remaining_after', 7000000);
+
+        $this->actingAs($this->admin)->getJson("/api/invoices/{$second}")
+            ->assertJsonPath('data.quotation_summary.quotation_total', 10000000)
+            ->assertJsonPath('data.quotation_summary.billed_before', 3000000)
+            ->assertJsonPath('data.quotation_summary.this_invoice', 2000000)
+            ->assertJsonPath('data.quotation_summary.remaining_after', 5000000)
+            ->assertJsonPath('data.quotation_summary.paid_total', 3000000)
+            ->assertJsonPath('data.quotation_summary.outstanding', 7000000);
+
+        // Web detail & PDF render the block.
+        $this->actingAs($this->admin)->get(route('invoices.show', $second))
+            ->assertOk()->assertSee('Sisa Setelah Invoice Ini');
+        $this->actingAs($this->admin)->get(route('pdf.invoice', $second))->assertOk();
+        $this->assertStringContainsString('Sisa Pembayaran', view('pdfs.invoice', ['invoice' => Invoice::with(['client', 'items', 'quotation'])->find($second), 'company' => \App\Models\CompanySetting::getSettings()])->render());
     }
 }

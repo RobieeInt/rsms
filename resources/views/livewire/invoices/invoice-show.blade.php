@@ -30,7 +30,9 @@
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 PDF
             </a>
+            @unless($invoice->isLocked())
             <a href="{{ route('invoices.edit', $invoice) }}" class="btn-secondary">Edit</a>
+            @endunless
             <a href="{{ route('invoices.index') }}" class="btn-secondary">Kembali</a>
         </div>
     </div>
@@ -115,6 +117,20 @@
                 <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Status</h3>
                 <span class="{{ $sc[$invoice->status] ?? 'badge-gray' }} text-sm px-3 py-1">{{ ucfirst($invoice->status) }}</span>
             </div>
+
+            @if($summary = $invoice->quotationSummary())
+            <div class="card p-5">
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Sisa Pembayaran</h3>
+                <div class="space-y-1.5 text-sm">
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Total Proyek ({{ $summary['quotation_number'] }})</span><span>Rp {{ number_format($summary['quotation_total'], 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Ditagih Sebelumnya</span><span>Rp {{ number_format($summary['billed_before'], 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Invoice Ini (Termin ke-{{ $invoice->installment_number }})</span><span>Rp {{ number_format($summary['this_invoice'], 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 pt-2"><span>Sisa Setelah Invoice Ini</span><span class="text-stone-600 dark:text-stone-400">Rp {{ number_format($summary['remaining_after'], 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between text-emerald-600 dark:text-emerald-500 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700"><span>Sudah Dibayar (semua termin)</span><span>Rp {{ number_format($summary['paid_total'], 0, ',', '.') }}</span></div>
+                    <div class="flex justify-between text-red-600 dark:text-red-400"><span>Belum Dibayar</span><span>Rp {{ number_format($summary['outstanding'], 0, ',', '.') }}</span></div>
+                </div>
+            </div>
+            @endif
 
             @if($invoice->payment_proof)
             <div class="card p-5">
